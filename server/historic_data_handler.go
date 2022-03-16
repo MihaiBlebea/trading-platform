@@ -48,7 +48,7 @@ func historicDataHandler() http.Handler {
 		}
 
 		resp := Response{
-			Success: false,
+			Success: true,
 			Data:    qs,
 		}
 		sendResponse(w, resp, http.StatusOK)

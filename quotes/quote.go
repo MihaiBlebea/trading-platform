@@ -9,13 +9,13 @@ import (
 )
 
 type Quote struct {
-	Symbol    string
-	Open      float32
-	Close     float32
-	High      float32
-	Low       float32
-	Volume    int
-	Timestamp int
+	Symbol    string  `json:"symbol"`
+	Open      float32 `json:"open"`
+	Close     float32 `json:"close"`
+	High      float32 `json:"high"`
+	Low       float32 `json:"low"`
+	Volume    int     `json:"volume"`
+	Timestamp int     `json:"timestamp"`
 }
 
 func NewQuote(bar *finance.ChartBar, symbol string) *Quote {
