@@ -29,6 +29,14 @@ func New(logger *logrus.Logger) {
 	api.Handle("/data/historic", historicDataHandler()).
 		Methods(http.MethodGet)
 
+	// Account endpoints
+	api.Handle("/account", createAccountHandler()).
+		Methods(http.MethodPost)
+
+	// Order endpoints
+	api.Handle("/order", placeOrderHandler()).
+		Methods(http.MethodPost)
+
 	r.Use(loggerMiddleware(logger))
 
 	srv := &http.Server{

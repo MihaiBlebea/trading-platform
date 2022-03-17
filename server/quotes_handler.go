@@ -7,7 +7,7 @@ import (
 	"github.com/MihaiBlebea/trading-platform/quotes"
 )
 
-type Response struct {
+type QuotesResponse struct {
 	Success bool           `json:"success"`
 	Error   string         `json:"error,omitempty"`
 	Data    []quotes.Quote `json:"data,omitempty"`
@@ -20,7 +20,7 @@ func historicDataHandler() http.Handler {
 		query := r.URL.Query()
 		startDate := query.Get("start")
 		if startDate == "" {
-			resp := Response{
+			resp := QuotesResponse{
 				Success: false,
 				Error:   "Invalid param start",
 			}
@@ -29,7 +29,7 @@ func historicDataHandler() http.Handler {
 		}
 		symbol := query.Get("symbol")
 		if symbol == "" {
-			resp := Response{
+			resp := QuotesResponse{
 				Success: false,
 				Error:   "Invalid param symbol",
 			}
@@ -39,7 +39,7 @@ func historicDataHandler() http.Handler {
 
 		qs, err := q.GetQuotes(strings.ToUpper(symbol), startDate, "1m")
 		if err != nil {
-			resp := Response{
+			resp := QuotesResponse{
 				Success: false,
 				Error:   err.Error(),
 			}
@@ -47,7 +47,7 @@ func historicDataHandler() http.Handler {
 			return
 		}
 
-		resp := Response{
+		resp := QuotesResponse{
 			Success: true,
 			Data:    qs,
 		}
