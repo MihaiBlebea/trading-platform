@@ -5,6 +5,7 @@ import (
 
 	"github.com/piquette/finance-go/chart"
 	"github.com/piquette/finance-go/datetime"
+	"github.com/piquette/finance-go/quote"
 )
 
 type Quotes struct {
@@ -40,11 +41,16 @@ func (q *Quotes) GetQuotes(symbol string, startDate string, interval string) ([]
 
 	q.quotes = quotes
 
-	return q.addTrends(), nil
+	return q.quotes, nil
 }
 
-func (q *Quotes) addTrends() []Quote {
-	return q.quotes
+func (q *Quotes) GetCurrentPrice(symbol string) (*BidAsk, error) {
+	raw, err := quote.Get(symbol)
+	if err != nil {
+		return &BidAsk{}, err
+	}
+
+	return NewBidAsk(symbol, float32(raw.Bid), float32(raw.Ask)), nil
 }
 
 func toTimeDate(val string) (time.Time, error) {

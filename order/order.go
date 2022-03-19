@@ -21,7 +21,7 @@ const (
 type OrderStatus string
 
 const (
-	StatusPending   OrderStatus = "limit"
+	StatusPending   OrderStatus = "pending"
 	StatusFilled    OrderStatus = "filled"
 	StatusCancelled OrderStatus = "cancelled"
 )
@@ -34,16 +34,19 @@ const (
 )
 
 type Order struct {
-	ID        int            `json:"id"`
-	AccountID int            `json:"-"`
-	Type      OrderType      `json:"type"`
-	Status    OrderStatus    `json:"status"`
-	Direction OrderDirection `json:"direction"`
-	Amount    float32        `json:"amount"`
-	Symbol    string         `json:"symbol"`
-	Quantity  int            `json:"quantity"`
-	CreatedAt time.Time      `json:"created_at"`
-	UpdatedAt time.Time      `json:"-"`
+	ID          int            `json:"id"`
+	AccountID   int            `json:"-"`
+	Type        OrderType      `json:"type"`
+	Status      OrderStatus    `json:"status"`
+	Direction   OrderDirection `json:"direction"`
+	Amount      float32        `json:"amount"`
+	FillPrice   float32        `json:"fill_price"`
+	Symbol      string         `json:"symbol"`
+	Quantity    int            `json:"quantity"`
+	FilledAt    time.Time      `json:"filled_at,omitempty"`
+	CancelledAt time.Time      `json:"cancelled_at,omitempty"`
+	CreatedAt   time.Time      `json:"created_at"`
+	UpdatedAt   time.Time      `json:"-"`
 }
 
 type OrderRepo struct {
@@ -90,4 +93,35 @@ func (or *OrderRepo) Save(order *Order) (*Order, error) {
 		return &Order{}, resp.Error
 	}
 	return order, nil
+}
+
+func (or *OrderRepo) Update(order *Order) error {
+	return or.conn.Save(order).Error
+}
+
+func (or *OrderRepo) WithPendingStatus() ([]Order, error) {
+	orders := []Order{}
+	err := or.conn.Where("status = 'pending'").Find(&orders).Error
+	if err != nil {
+		return []Order{}, err
+	}
+
+	return orders, err
+}
+
+func (or *OrderRepo) WithAccountId(accountId int) ([]Order, error) {
+	orders := []Order{}
+	err := or.conn.Where("account_id = ?", accountId).Find(&orders).Error
+	if err != nil {
+		return []Order{}, err
+	}
+
+	return orders, err
+}
+
+func (o *Order) FillOrder(price float32) {
+	o.FillPrice = price
+	o.FilledAt = time.Now()
+	o.Quantity = int(o.Amount / price)
+	o.Status = StatusFilled
 }

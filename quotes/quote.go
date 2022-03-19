@@ -18,6 +18,12 @@ type Quote struct {
 	Timestamp int     `json:"timestamp"`
 }
 
+type BidAsk struct {
+	Symbol string  `json:"symbol"`
+	Bid    float32 `json:"bid"`
+	Ask    float32 `json:"ask"`
+}
+
 func NewQuote(bar *finance.ChartBar, symbol string) *Quote {
 	return &Quote{
 		Symbol:    strings.ToUpper(symbol),
@@ -28,6 +34,22 @@ func NewQuote(bar *finance.ChartBar, symbol string) *Quote {
 		Volume:    bar.Volume,
 		Timestamp: bar.Timestamp,
 	}
+}
+
+func NewQuoteFromRaw(symbol string, open, close, high, low float32, volume, timestamp int) *Quote {
+	return &Quote{
+		Symbol:    strings.ToUpper(symbol),
+		Open:      open,
+		Close:     close,
+		High:      high,
+		Low:       low,
+		Volume:    volume,
+		Timestamp: timestamp,
+	}
+}
+
+func NewBidAsk(symbol string, bid, ask float32) *BidAsk {
+	return &BidAsk{symbol, bid, ask}
 }
 
 func toFloat32(val decimal.Decimal) float32 {

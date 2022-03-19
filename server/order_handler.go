@@ -2,6 +2,7 @@ package http
 
 import (
 	"encoding/json"
+	"errors"
 	"net/http"
 	"strings"
 
@@ -22,6 +23,12 @@ type PlaceOrderResponse struct {
 	Order   *order.Order `json:"order,omitempty"`
 }
 
+type OrdersResponse struct {
+	Success bool          `json:"success"`
+	Error   string        `json:"error,omitempty"`
+	Orders  []order.Order `json:"orders"`
+}
+
 func placeOrderHandler() http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		var req PlaceOrderRequest
@@ -33,6 +40,10 @@ func placeOrderHandler() http.Handler {
 		}
 
 		header := r.Header.Get("Authorization")
+		if header == "" {
+			serverError(w, errors.New("could not find authorization header"))
+			return
+		}
 		apiToken := strings.Split(header, "Bearer ")[1]
 
 		accountRepo, err := account.NewAccountRepo()
@@ -63,6 +74,47 @@ func placeOrderHandler() http.Handler {
 		resp := PlaceOrderResponse{
 			Success: true,
 			Order:   order,
+		}
+		sendResponse(w, resp, http.StatusOK)
+	})
+}
+
+func ordersHandler() http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		header := r.Header.Get("Authorization")
+		if header == "" {
+			serverError(w, errors.New("could not find authorization header"))
+			return
+		}
+		apiToken := strings.Split(header, "Bearer ")[1]
+
+		accountRepo, err := account.NewAccountRepo()
+		if err != nil {
+			serverError(w, err)
+			return
+		}
+
+		account, err := accountRepo.WithToken(apiToken)
+		if err != nil {
+			serverError(w, err)
+			return
+		}
+
+		repo, err := order.NewOrderRepo()
+		if err != nil {
+			serverError(w, err)
+			return
+		}
+
+		orders, err := repo.WithAccountId(account.ID)
+		if err != nil {
+			serverError(w, err)
+			return
+		}
+
+		resp := OrdersResponse{
+			Success: true,
+			Orders:  orders,
 		}
 		sendResponse(w, resp, http.StatusOK)
 	})
