@@ -7,6 +7,7 @@ import (
 	"strings"
 
 	"github.com/MihaiBlebea/trading-platform/account"
+	"github.com/MihaiBlebea/trading-platform/activity"
 	"github.com/MihaiBlebea/trading-platform/order"
 )
 
@@ -52,20 +53,20 @@ func placeOrderHandler() http.Handler {
 			return
 		}
 
-		account, err := accountRepo.WithToken(apiToken)
+		orderRepo, err := order.NewOrderRepo()
 		if err != nil {
 			serverError(w, err)
 			return
 		}
 
-		repo, err := order.NewOrderRepo()
-		if err != nil {
-			serverError(w, err)
-			return
-		}
-
-		order := order.NewOrder(account.ID, req.Type, req.Direction, req.Amount, req.Symbol)
-		order, err = repo.Save(order)
+		orderPlacer := activity.NewOrderPlacer(accountRepo, orderRepo)
+		order, err := orderPlacer.PlaceOrder(
+			apiToken,
+			req.Type,
+			req.Direction,
+			req.Symbol,
+			req.Amount,
+		)
 		if err != nil {
 			serverError(w, err)
 			return

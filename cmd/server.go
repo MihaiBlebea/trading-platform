@@ -8,8 +8,9 @@ import (
 	"github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
 
+	"github.com/MihaiBlebea/trading-platform/account"
+	"github.com/MihaiBlebea/trading-platform/activity"
 	"github.com/MihaiBlebea/trading-platform/order"
-	"github.com/MihaiBlebea/trading-platform/quotes"
 	server "github.com/MihaiBlebea/trading-platform/server"
 )
 
@@ -38,9 +39,19 @@ var startServerCmd = &cobra.Command{
 			return err
 		}
 
+		accountRepo, err := account.NewAccountRepo()
+		if err != nil {
+			return err
+		}
+
+		filler := activity.NewFiller(accountRepo, orderRepo, l)
+
 		go func(orderRepo *order.OrderRepo) {
 			for {
-				fillOrders(orderRepo)
+				err := filler.FillPendingOrders()
+				if err != nil {
+					continue
+				}
 				time.Sleep(60 * time.Second)
 			}
 		}(orderRepo)
@@ -49,34 +60,4 @@ var startServerCmd = &cobra.Command{
 
 		return nil
 	},
-}
-
-func fillOrders(orderRepo *order.OrderRepo) error {
-	orders, err := orderRepo.WithPendingStatus()
-	if err != nil {
-		return err
-	}
-
-	if len(orders) == 0 {
-		fmt.Println("no orders to fill")
-		return nil
-	}
-
-	for _, o := range orders {
-		quotes := quotes.Quotes{}
-		bidAsk, err := quotes.GetCurrentPrice(o.Symbol)
-		if err != nil {
-			fmt.Println(err)
-			continue
-		}
-		if o.Direction == order.DirectionBuy {
-			o.FillOrder(bidAsk.Ask)
-		} else {
-			o.FillOrder(bidAsk.Bid)
-		}
-
-		orderRepo.Update(&o)
-	}
-
-	return nil
 }
