@@ -5,12 +5,19 @@ import (
 	"time"
 )
 
+type Order interface {
+	GetTotalFillAmount() float32
+	GetAmount() float32
+	GetDirectionString() string
+}
+
 type Account struct {
-	ID        int       `json:"-"`
-	ApiToken  string    `json:"api_token"`
-	Balance   float32   `json:"balance"`
-	CreatedAt time.Time `json:"created_at"`
-	UpdatedAt time.Time `json:"-"`
+	ID             int       `json:"-"`
+	ApiToken       string    `json:"api_token"`
+	Balance        float32   `json:"balance"`
+	PendingBalance float32   `json:"pending_balance"`
+	CreatedAt      time.Time `json:"created_at"`
+	UpdatedAt      time.Time `json:"-"`
 }
 
 func NewAccount() *Account {
@@ -30,10 +37,13 @@ func genApiKey(n int) string {
 	return string(b)
 }
 
-func (a *Account) UpdateBalance(amount float32) {
-	a.Balance += amount
+func (a *Account) UpdateBalance(order Order) {
+	a.Balance += order.GetTotalFillAmount()
+	if order.GetDirectionString() == "buy" {
+		a.PendingBalance -= order.GetAmount()
+	}
 }
 
 func (a *Account) HasEnoughBalance(amount float32) bool {
-	return a.Balance > amount
+	return a.Balance-a.PendingBalance > amount
 }

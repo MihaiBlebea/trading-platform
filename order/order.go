@@ -68,3 +68,15 @@ func (o *Order) FillOrder(price float32) {
 
 	o.Status = StatusFilled
 }
+
+func (o *Order) GetTotalFillAmount() float32 {
+	return o.AmountAfterFill
+}
+
+func (o *Order) GetAmount() float32 {
+	return o.Amount
+}
+
+func (o *Order) GetDirectionString() string {
+	return string(o.Direction)
+}

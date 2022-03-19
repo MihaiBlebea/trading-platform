@@ -70,12 +70,7 @@ func (f *Filler) updateInternalRecords(o *order.Order) error {
 		return err
 	}
 
-	updateAccAmount := o.FillPrice * float32(o.Quantity)
-	if o.Direction == order.DirectionBuy {
-		updateAccAmount = -updateAccAmount
-	}
-
-	account.UpdateBalance(updateAccAmount)
+	account.UpdateBalance(o)
 	if err != nil {
 		return err
 	}
@@ -87,7 +82,7 @@ func (f *Filler) updateInternalRecords(o *order.Order) error {
 		fmt.Sprintf(
 			"account balance updated id %d with amount: %v",
 			account.ID,
-			updateAccAmount,
+			o.AmountAfterFill,
 		),
 	)
 

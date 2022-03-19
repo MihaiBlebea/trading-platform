@@ -25,12 +25,20 @@ func (op *OrderPlacer) PlaceOrder(apiToken, orderType, direction, symbol string,
 		return &order.Order{}, err
 	}
 
-	if account.Balance < amount {
+	if direction == string(order.DirectionBuy) && !account.HasEnoughBalance(amount) {
 		return &order.Order{}, errors.New("insufficient balance to place this order")
 	}
 
 	o := order.NewOrder(account.ID, orderType, direction, amount, symbol)
 	o, err = op.orderRepo.Save(o)
+	if err != nil {
+		return &order.Order{}, err
+	}
+
+	if direction == string(order.DirectionBuy) {
+		account.PendingBalance = amount
+	}
+	err = op.accountRepo.Update(account)
 	if err != nil {
 		return &order.Order{}, err
 	}

@@ -33,6 +33,9 @@ func New(logger *logrus.Logger) {
 	api.Handle("/account", createAccountHandler()).
 		Methods(http.MethodPost)
 
+	api.Handle("/account", accountHandler()).
+		Methods(http.MethodGet)
+
 	// Order endpoints
 	api.Handle("/order", placeOrderHandler()).
 		Methods(http.MethodPost)
