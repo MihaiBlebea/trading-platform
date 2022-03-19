@@ -5,39 +5,105 @@ import (
 
 	"github.com/MihaiBlebea/trading-platform/account"
 	"github.com/MihaiBlebea/trading-platform/order"
+	"github.com/MihaiBlebea/trading-platform/pos"
 )
 
 type OrderPlacer struct {
-	accountRepo *account.AccountRepo
-	orderRepo   *order.OrderRepo
+	accountRepo  *account.AccountRepo
+	orderRepo    *order.OrderRepo
+	positionRepo *pos.PositionRepo
 }
 
-func NewOrderPlacer(accountRepo *account.AccountRepo, orderRepo *order.OrderRepo) *OrderPlacer {
+func NewOrderPlacer(
+	accountRepo *account.AccountRepo,
+	orderRepo *order.OrderRepo,
+	positionRepo *pos.PositionRepo) *OrderPlacer {
+
 	return &OrderPlacer{
-		accountRepo: accountRepo,
-		orderRepo:   orderRepo,
+		accountRepo:  accountRepo,
+		orderRepo:    orderRepo,
+		positionRepo: positionRepo,
 	}
 }
 
-func (op *OrderPlacer) PlaceOrder(apiToken, orderType, direction, symbol string, amount float32) (*order.Order, error) {
+func (op *OrderPlacer) PlaceOrder(
+	apiToken,
+	orderType,
+	direction,
+	symbol string,
+	amount float32,
+	quantity int) (*order.Order, error) {
+
 	account, err := op.accountRepo.WithToken(apiToken)
 	if err != nil {
 		return &order.Order{}, err
 	}
 
-	if direction == string(order.DirectionBuy) && !account.HasEnoughBalance(amount) {
+	if direction == string(order.DirectionBuy) {
+		return op.PlaceBuyOrder(account, orderType, symbol, amount)
+	}
+
+	return op.PlaceSellOrder(account, orderType, symbol, quantity)
+}
+
+func (op *OrderPlacer) PlaceBuyOrder(
+	account *account.Account,
+	orderType,
+	symbol string,
+	amount float32) (*order.Order, error) {
+
+	if amount == 0 {
+		return &order.Order{}, errors.New("need to specify an amount greater than 0")
+	}
+
+	if !account.HasEnoughBalance(amount) {
 		return &order.Order{}, errors.New("insufficient balance to place this order")
 	}
 
-	o := order.NewOrder(account.ID, orderType, direction, amount, symbol)
+	o := order.NewBuyOrder(account.ID, orderType, symbol, amount)
+	o, err := op.orderRepo.Save(o)
+	if err != nil {
+		return &order.Order{}, err
+	}
+
+	account.PendingBalance = amount
+	err = op.accountRepo.Update(account)
+	if err != nil {
+		return &order.Order{}, err
+	}
+
+	return o, nil
+}
+
+func (op *OrderPlacer) PlaceSellOrder(
+	account *account.Account,
+	orderType,
+	symbol string,
+	quantity int) (*order.Order, error) {
+
+	if quantity == 0 {
+		return &order.Order{}, errors.New("need to specify a quantity greater than 0")
+	}
+
+	position, err := op.positionRepo.WithAccountAndSymbol(account.ID, symbol)
+	if err != nil {
+		return &order.Order{}, err
+	}
+
+	if !position.IsFound() {
+		return &order.Order{}, errors.New("could not find position")
+	}
+
+	if position.Quantity < quantity {
+		return &order.Order{}, errors.New("position quantity is too low")
+	}
+
+	o := order.NewSellOrder(account.ID, orderType, symbol, quantity)
 	o, err = op.orderRepo.Save(o)
 	if err != nil {
 		return &order.Order{}, err
 	}
 
-	if direction == string(order.DirectionBuy) {
-		account.PendingBalance = amount
-	}
 	err = op.accountRepo.Update(account)
 	if err != nil {
 		return &order.Order{}, err

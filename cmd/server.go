@@ -10,8 +10,9 @@ import (
 
 	"github.com/MihaiBlebea/trading-platform/account"
 	"github.com/MihaiBlebea/trading-platform/activity"
+	"github.com/MihaiBlebea/trading-platform/http"
 	"github.com/MihaiBlebea/trading-platform/order"
-	server "github.com/MihaiBlebea/trading-platform/server"
+	"github.com/MihaiBlebea/trading-platform/pos"
 )
 
 func init() {
@@ -44,7 +45,12 @@ var startServerCmd = &cobra.Command{
 			return err
 		}
 
-		filler := activity.NewFiller(accountRepo, orderRepo, l)
+		positionRepo, err := pos.NewPositionRepo()
+		if err != nil {
+			return err
+		}
+
+		filler := activity.NewFiller(accountRepo, orderRepo, positionRepo, l)
 
 		go func(orderRepo *order.OrderRepo) {
 			for {
@@ -56,7 +62,7 @@ var startServerCmd = &cobra.Command{
 			}
 		}(orderRepo)
 
-		server.New(l)
+		http.New(l)
 
 		return nil
 	},

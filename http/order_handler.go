@@ -9,6 +9,7 @@ import (
 	"github.com/MihaiBlebea/trading-platform/account"
 	"github.com/MihaiBlebea/trading-platform/activity"
 	"github.com/MihaiBlebea/trading-platform/order"
+	"github.com/MihaiBlebea/trading-platform/pos"
 )
 
 type PlaceOrderRequest struct {
@@ -16,6 +17,7 @@ type PlaceOrderRequest struct {
 	Amount    float32 `json:"amount"`
 	Type      string  `json:"type"`
 	Direction string  `json:"direction"`
+	Quantity  int     `json:"quantity"`
 }
 
 type PlaceOrderResponse struct {
@@ -59,13 +61,20 @@ func placeOrderHandler() http.Handler {
 			return
 		}
 
-		orderPlacer := activity.NewOrderPlacer(accountRepo, orderRepo)
+		positionRepo, err := pos.NewPositionRepo()
+		if err != nil {
+			serverError(w, err)
+			return
+		}
+
+		orderPlacer := activity.NewOrderPlacer(accountRepo, orderRepo, positionRepo)
 		order, err := orderPlacer.PlaceOrder(
 			apiToken,
 			req.Type,
 			req.Direction,
 			req.Symbol,
 			req.Amount,
+			req.Quantity,
 		)
 		if err != nil {
 			serverError(w, err)

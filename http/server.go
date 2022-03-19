@@ -43,6 +43,10 @@ func New(logger *logrus.Logger) {
 	api.Handle("/orders", ordersHandler()).
 		Methods(http.MethodGet)
 
+	// Position endpoints
+	api.Handle("/positions", positionsHandler()).
+		Methods(http.MethodGet)
+
 	r.Use(loggerMiddleware(logger))
 
 	srv := &http.Server{

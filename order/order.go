@@ -45,13 +45,24 @@ type Order struct {
 	UpdatedAt       *time.Time     `json:"-"`
 }
 
-func NewOrder(accountId int, orderType, direction string, amount float32, symbol string) *Order {
+func NewBuyOrder(accountId int, orderType, symbol string, amount float32) *Order {
 	return &Order{
 		AccountID: accountId,
 		Type:      OrderType(orderType),
 		Status:    StatusPending,
-		Direction: OrderDirection(direction),
+		Direction: DirectionBuy,
 		Amount:    amount,
+		Symbol:    strings.ToUpper(symbol),
+	}
+}
+
+func NewSellOrder(accountId int, orderType, symbol string, quantity int) *Order {
+	return &Order{
+		AccountID: accountId,
+		Type:      OrderType(orderType),
+		Status:    StatusPending,
+		Direction: DirectionSell,
+		Quantity:  quantity,
 		Symbol:    strings.ToUpper(symbol),
 	}
 }
@@ -60,13 +71,14 @@ func (o *Order) FillOrder(price float32) {
 	now := time.Now()
 	o.FillPrice = price
 	o.FilledAt = &now
-	o.Quantity = int(o.Amount / price)
+	o.Status = StatusFilled
+	if o.Direction == DirectionBuy {
+		o.Quantity = int(o.Amount / price)
+	}
 	o.AmountAfterFill = o.FillPrice * float32(o.Quantity)
 	if o.Direction == DirectionBuy {
 		o.AmountAfterFill = -o.AmountAfterFill
 	}
-
-	o.Status = StatusFilled
 }
 
 func (o *Order) GetTotalFillAmount() float32 {

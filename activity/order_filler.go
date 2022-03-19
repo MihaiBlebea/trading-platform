@@ -1,25 +1,34 @@
 package activity
 
 import (
+	"errors"
 	"fmt"
 
 	"github.com/MihaiBlebea/trading-platform/account"
 	"github.com/MihaiBlebea/trading-platform/order"
+	"github.com/MihaiBlebea/trading-platform/pos"
 	"github.com/MihaiBlebea/trading-platform/quotes"
 	"github.com/sirupsen/logrus"
 )
 
 type Filler struct {
-	accountRepo *account.AccountRepo
-	orderRepo   *order.OrderRepo
-	logger      *logrus.Logger
+	accountRepo  *account.AccountRepo
+	orderRepo    *order.OrderRepo
+	positionRepo *pos.PositionRepo
+	logger       *logrus.Logger
 }
 
-func NewFiller(accountRepo *account.AccountRepo, orderRepo *order.OrderRepo, logger *logrus.Logger) *Filler {
+func NewFiller(
+	accountRepo *account.AccountRepo,
+	orderRepo *order.OrderRepo,
+	positionRepo *pos.PositionRepo,
+	logger *logrus.Logger) *Filler {
+
 	return &Filler{
-		accountRepo: accountRepo,
-		orderRepo:   orderRepo,
-		logger:      logger,
+		accountRepo:  accountRepo,
+		orderRepo:    orderRepo,
+		positionRepo: positionRepo,
+		logger:       logger,
 	}
 }
 
@@ -85,6 +94,57 @@ func (f *Filler) updateInternalRecords(o *order.Order) error {
 			o.AmountAfterFill,
 		),
 	)
+
+	err = f.updatePosition(o)
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func (f *Filler) updatePosition(o *order.Order) error {
+	position, err := f.positionRepo.WithAccountAndSymbol(o.AccountID, o.Symbol)
+	if err != nil {
+		return err
+	}
+
+	if o.Direction == order.DirectionBuy {
+		if position.ID == 0 {
+			// There is no position yet
+			position = pos.NewPosition(o.AccountID, o.Symbol, o.Quantity)
+			_, err := f.positionRepo.Save(position)
+			if err != nil {
+				return err
+			}
+		} else {
+			position.IncrementQuantity(o.Quantity)
+			err := f.positionRepo.Update(position)
+			if err != nil {
+				return err
+			}
+		}
+	} else {
+		if position.ID == 0 {
+			// There is no position yet
+			// This should not be possible
+			return errors.New("position that you want to sell is not found")
+		}
+
+		position.DecrementQuantity(o.Quantity)
+
+		if position.Quantity == 0 {
+			err := f.positionRepo.Delete(position)
+			if err != nil {
+				return err
+			}
+		} else {
+			err := f.positionRepo.Update(position)
+			if err != nil {
+				return err
+			}
+		}
+	}
 
 	return nil
 }
