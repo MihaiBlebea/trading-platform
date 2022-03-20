@@ -130,3 +130,67 @@ Fail response example:
 	"error": "Something went wrong"
 }
 ```
+
+
+### Retrieve a list of existing orders
+
+- **GET** `/api/v1/orders`
+
+Get a list of existing orders for this account.
+
+They can be pending, filled or cancelled orders.
+
+- `amount_after_fill` key will be present in response only if the order has been filled.
+
+- `filled_at` key is only present in response if order is filed.
+
+Headers:
+
+```json
+{
+	"Authorization": "Bearer <Api Token>"
+}
+```
+
+Success response example:
+
+```json
+{
+	"success": true,
+	"orders": [
+		{
+			"id": 5,
+			"type": "limit",
+			"status": "pending",
+			"direction": "buy",
+			"amount": 1000,
+			"fill_price": 164.34,
+			"symbol": "AAPL",
+			"quantity": 6,
+			"created_at": "2022-03-19T12:35:39.280604Z"
+		},
+		{
+			"id": 6,
+			"type": "limit",
+			"status": "filled",
+			"direction": "sell",
+			"amount": 1000,
+			"fill_price": 164.23,
+			"amount_after_fill": 985.38,
+			"symbol": "AAPL",
+			"quantity": 6,
+			"filled_at": "2022-03-19T12:37:13.294119Z",
+			"created_at": "2022-03-19T12:36:37.531223Z"
+		}
+    ]
+}
+```
+
+Fail response example:
+
+```json
+{
+	"success": false,
+	"error": "Something went wrong"
+}
+```
