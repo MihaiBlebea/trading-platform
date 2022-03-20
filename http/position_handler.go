@@ -5,7 +5,7 @@ import (
 	"net/http"
 	"strings"
 
-	"github.com/MihaiBlebea/trading-platform/account"
+	"github.com/MihaiBlebea/trading-platform/di"
 	"github.com/MihaiBlebea/trading-platform/pos"
 )
 
@@ -24,11 +24,17 @@ func positionsHandler() http.Handler {
 		}
 		apiToken := strings.Split(header, "Bearer ")[1]
 
-		accountRepo, err := account.NewAccountRepo()
+		di, err := di.NewContainer()
 		if err != nil {
-			serverError(w, err)
+			resp := AccountResponse{
+				Success: false,
+				Error:   err.Error(),
+			}
+			sendResponse(w, resp, http.StatusInternalServerError)
 			return
 		}
+
+		accountRepo := di.GetAccountRepo()
 
 		account, err := accountRepo.WithToken(apiToken)
 		if err != nil {
@@ -36,11 +42,7 @@ func positionsHandler() http.Handler {
 			return
 		}
 
-		positionRepo, err := pos.NewPositionRepo()
-		if err != nil {
-			serverError(w, err)
-			return
-		}
+		positionRepo := di.GetPositionRepo()
 
 		positions, err := positionRepo.WithAccountId(account.ID)
 		if err != nil {

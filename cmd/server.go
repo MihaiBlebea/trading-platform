@@ -2,17 +2,12 @@ package cmd
 
 import (
 	"fmt"
-	"os"
 	"time"
 
-	"github.com/sirupsen/logrus"
-	"github.com/spf13/cobra"
-
-	"github.com/MihaiBlebea/trading-platform/account"
 	"github.com/MihaiBlebea/trading-platform/activity"
+	"github.com/MihaiBlebea/trading-platform/di"
 	"github.com/MihaiBlebea/trading-platform/http"
-	"github.com/MihaiBlebea/trading-platform/order"
-	"github.com/MihaiBlebea/trading-platform/pos"
+	"github.com/spf13/cobra"
 )
 
 func init() {
@@ -29,40 +24,26 @@ var startServerCmd = &cobra.Command{
 	RunE: func(cmd *cobra.Command, args []string) error {
 		fmt.Println("Server is starting")
 
-		l := logrus.New()
-
-		l.SetFormatter(&logrus.JSONFormatter{})
-		l.SetOutput(os.Stdout)
-		l.SetLevel(logrus.InfoLevel)
-
-		orderRepo, err := order.NewOrderRepo()
+		di, err := di.NewContainer()
 		if err != nil {
 			return err
 		}
 
-		accountRepo, err := account.NewAccountRepo()
-		if err != nil {
-			return err
-		}
+		orderFiller := di.GetOrderFiller()
 
-		positionRepo, err := pos.NewPositionRepo()
-		if err != nil {
-			return err
-		}
+		logger := di.GetLogger()
 
-		filler := activity.NewFiller(accountRepo, orderRepo, positionRepo, l)
-
-		go func(orderRepo *order.OrderRepo) {
+		go func(orderFiller *activity.Filler) {
 			for {
-				err := filler.FillPendingOrders()
+				err := orderFiller.FillPendingOrders()
 				if err != nil {
 					continue
 				}
 				time.Sleep(60 * time.Second)
 			}
-		}(orderRepo)
+		}(orderFiller)
 
-		http.New(l)
+		http.New(logger)
 
 		return nil
 	},

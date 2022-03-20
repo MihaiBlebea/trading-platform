@@ -6,10 +6,8 @@ import (
 	"net/http"
 	"strings"
 
-	"github.com/MihaiBlebea/trading-platform/account"
-	"github.com/MihaiBlebea/trading-platform/activity"
+	"github.com/MihaiBlebea/trading-platform/di"
 	"github.com/MihaiBlebea/trading-platform/order"
-	"github.com/MihaiBlebea/trading-platform/pos"
 )
 
 type PlaceOrderRequest struct {
@@ -49,25 +47,17 @@ func placeOrderHandler() http.Handler {
 		}
 		apiToken := strings.Split(header, "Bearer ")[1]
 
-		accountRepo, err := account.NewAccountRepo()
+		di, err := di.NewContainer()
 		if err != nil {
-			serverError(w, err)
+			resp := AccountResponse{
+				Success: false,
+				Error:   err.Error(),
+			}
+			sendResponse(w, resp, http.StatusInternalServerError)
 			return
 		}
 
-		orderRepo, err := order.NewOrderRepo()
-		if err != nil {
-			serverError(w, err)
-			return
-		}
-
-		positionRepo, err := pos.NewPositionRepo()
-		if err != nil {
-			serverError(w, err)
-			return
-		}
-
-		orderPlacer := activity.NewOrderPlacer(accountRepo, orderRepo, positionRepo)
+		orderPlacer := di.GetOrderPlacer()
 		order, err := orderPlacer.PlaceOrder(
 			apiToken,
 			req.Type,
@@ -98,11 +88,18 @@ func ordersHandler() http.Handler {
 		}
 		apiToken := strings.Split(header, "Bearer ")[1]
 
-		accountRepo, err := account.NewAccountRepo()
+		di, err := di.NewContainer()
 		if err != nil {
-			serverError(w, err)
+			resp := AccountResponse{
+				Success: false,
+				Error:   err.Error(),
+			}
+			sendResponse(w, resp, http.StatusInternalServerError)
 			return
 		}
+
+		accountRepo := di.GetAccountRepo()
+		orderRepo := di.GetOrderRepo()
 
 		account, err := accountRepo.WithToken(apiToken)
 		if err != nil {
@@ -110,13 +107,7 @@ func ordersHandler() http.Handler {
 			return
 		}
 
-		repo, err := order.NewOrderRepo()
-		if err != nil {
-			serverError(w, err)
-			return
-		}
-
-		orders, err := repo.WithAccountId(account.ID)
+		orders, err := orderRepo.WithAccountId(account.ID)
 		if err != nil {
 			serverError(w, err)
 			return

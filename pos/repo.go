@@ -1,11 +1,8 @@
 package pos
 
 import (
-	"fmt"
-	"os"
 	"strings"
 
-	"gorm.io/driver/postgres"
 	"gorm.io/gorm"
 )
 
@@ -13,21 +10,7 @@ type PositionRepo struct {
 	conn *gorm.DB
 }
 
-func NewPositionRepo() (*PositionRepo, error) {
-	dsn := fmt.Sprintf(
-		"host=%s user=%s password=%s dbname=%s port=%s sslmode=disable TimeZone=Europe/London",
-		os.Getenv("POSTGRES_HOST"),
-		os.Getenv("POSTGRES_USER"),
-		os.Getenv("POSTGRES_PASSWORD"),
-		os.Getenv("POSTGRES_DB"),
-		os.Getenv("POSTGRES_PORT"),
-	)
-
-	conn, err := gorm.Open(postgres.Open(dsn), &gorm.Config{})
-	if err != nil {
-		return &PositionRepo{}, err
-	}
-
+func NewPositionRepo(conn *gorm.DB) (*PositionRepo, error) {
 	if err := conn.AutoMigrate(&Position{}); err != nil {
 		return &PositionRepo{}, err
 	}

@@ -6,6 +6,7 @@ import (
 	"strings"
 
 	"github.com/MihaiBlebea/trading-platform/account"
+	"github.com/MihaiBlebea/trading-platform/di"
 )
 
 type AccountResponse struct {
@@ -16,7 +17,8 @@ type AccountResponse struct {
 
 func createAccountHandler() http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		repo, err := account.NewAccountRepo()
+
+		di, err := di.NewContainer()
 		if err != nil {
 			resp := AccountResponse{
 				Success: false,
@@ -26,7 +28,9 @@ func createAccountHandler() http.Handler {
 			return
 		}
 
-		account, err := repo.Save(account.NewAccount())
+		accountRepo := di.GetAccountRepo()
+
+		account, err := accountRepo.Save(account.NewAccount())
 		if err != nil {
 			resp := AccountResponse{
 				Success: false,
@@ -53,7 +57,7 @@ func accountHandler() http.Handler {
 		}
 		apiToken := strings.Split(header, "Bearer ")[1]
 
-		repo, err := account.NewAccountRepo()
+		di, err := di.NewContainer()
 		if err != nil {
 			resp := AccountResponse{
 				Success: false,
@@ -63,7 +67,9 @@ func accountHandler() http.Handler {
 			return
 		}
 
-		account, err := repo.WithToken(apiToken)
+		accountRepo := di.GetAccountRepo()
+
+		account, err := accountRepo.WithToken(apiToken)
 		if err != nil {
 			resp := AccountResponse{
 				Success: false,
