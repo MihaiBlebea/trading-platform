@@ -5,19 +5,18 @@ import (
 
 	"github.com/MihaiBlebea/trading-platform/account"
 	"github.com/MihaiBlebea/trading-platform/order"
-	"github.com/MihaiBlebea/trading-platform/pos"
 )
 
 type OrderPlacer struct {
-	accountRepo  *account.AccountRepo
-	orderRepo    *order.OrderRepo
-	positionRepo *pos.PositionRepo
+	accountRepo  AccountRepo
+	orderRepo    OrderRepo
+	positionRepo PositionRepo
 }
 
 func NewOrderPlacer(
-	accountRepo *account.AccountRepo,
-	orderRepo *order.OrderRepo,
-	positionRepo *pos.PositionRepo) *OrderPlacer {
+	accountRepo AccountRepo,
+	orderRepo OrderRepo,
+	positionRepo PositionRepo) *OrderPlacer {
 
 	return &OrderPlacer{
 		accountRepo:  accountRepo,
