@@ -14,14 +14,20 @@ type PositionRepoMock struct {
 }
 
 func TestCanPlaceBuyOrder(t *testing.T) {
+	accountRepo := account.AccountRepoMock{}
+	account, _ := accountRepo.Save(account.NewAccount())
+	apiToken := account.ApiToken
+
 	orderPlacer := activity.NewOrderPlacer(
-		&account.AccountRepoMock{},
+		&accountRepo,
 		&order.OrderRepoMock{},
 		&pos.PositionRepo{},
 	)
 
+	fmt.Println(accountRepo)
+
 	order, err := orderPlacer.PlaceOrder(
-		"api_token",
+		apiToken,
 		"limit",
 		"buy",
 		"AAPL",
