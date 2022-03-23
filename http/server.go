@@ -47,6 +47,10 @@ func New(logger *logrus.Logger) {
 	api.Handle("/positions", positionsHandler()).
 		Methods(http.MethodGet)
 
+	// Fundamentals endpoints
+	api.Handle("/fundamental/{symbol}", fundamentalsHandler()).
+		Methods(http.MethodGet)
+
 	r.Use(loggerMiddleware(logger))
 
 	srv := &http.Server{
