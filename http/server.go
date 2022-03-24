@@ -48,7 +48,7 @@ func New(logger *logrus.Logger) {
 		Methods(http.MethodGet)
 
 	// Fundamentals endpoints
-	api.Handle("/fundamental/{symbol}", fundamentalsHandler()).
+	api.Handle("/fundamental/{symbol}/{module}", fundamentalsHandler()).
 		Methods(http.MethodGet)
 
 	r.Use(loggerMiddleware(logger))

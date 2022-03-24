@@ -3,7 +3,7 @@ module github.com/MihaiBlebea/trading-platform
 go 1.17
 
 require (
-	github.com/MihaiBlebea/yahoo-api-go v1.0.2
+	github.com/MihaiBlebea/yahoo-api-go v1.0.3
 	github.com/gorilla/mux v1.8.0
 	github.com/joho/godotenv v1.4.0
 	github.com/piquette/finance-go v1.0.0
