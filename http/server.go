@@ -40,6 +40,9 @@ func New(logger *logrus.Logger) {
 	api.Handle("/order", placeOrderHandler()).
 		Methods(http.MethodPost)
 
+	api.Handle("/order/cancel", cancelOrderHandler()).
+		Methods(http.MethodPut)
+
 	api.Handle("/orders", ordersHandler()).
 		Methods(http.MethodGet)
 

@@ -11,14 +11,20 @@ import (
 )
 
 type PlaceOrderRequest struct {
-	Symbol    string  `json:"symbol"`
-	Amount    float32 `json:"amount"`
-	Type      string  `json:"type"`
-	Direction string  `json:"direction"`
-	Quantity  int     `json:"quantity"`
+	Symbol     string  `json:"symbol"`
+	Amount     float32 `json:"amount"`
+	Type       string  `json:"type"`
+	Direction  string  `json:"direction"`
+	Quantity   int     `json:"quantity"`
+	StopLoss   float32 `json:"stop-loss"`
+	TakeProfit float32 `json:"take-profit"`
 }
 
-type PlaceOrderResponse struct {
+type CancelOrderRequest struct {
+	OrderID int `json:"order_id"`
+}
+
+type OrderResponse struct {
 	Success bool         `json:"success"`
 	Error   string       `json:"error,omitempty"`
 	Order   *order.Order `json:"order,omitempty"`
@@ -49,11 +55,7 @@ func placeOrderHandler() http.Handler {
 
 		di, err := di.NewContainer()
 		if err != nil {
-			resp := AccountResponse{
-				Success: false,
-				Error:   err.Error(),
-			}
-			sendResponse(w, resp, http.StatusInternalServerError)
+			serverError(w, err)
 			return
 		}
 
@@ -71,7 +73,48 @@ func placeOrderHandler() http.Handler {
 			return
 		}
 
-		resp := PlaceOrderResponse{
+		resp := OrderResponse{
+			Success: true,
+			Order:   order,
+		}
+		sendResponse(w, resp, http.StatusOK)
+	})
+}
+
+func cancelOrderHandler() http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		var req CancelOrderRequest
+
+		err := json.NewDecoder(r.Body).Decode(&req)
+		if err != nil {
+			serverError(w, err)
+			return
+		}
+
+		header := r.Header.Get("Authorization")
+		if header == "" {
+			serverError(w, errors.New("could not find authorization header"))
+			return
+		}
+		apiToken := strings.Split(header, "Bearer ")[1]
+
+		di, err := di.NewContainer()
+		if err != nil {
+			serverError(w, err)
+			return
+		}
+
+		orderCanceller := di.GetOrderCanceller()
+		order, err := orderCanceller.CancelOrder(
+			apiToken,
+			req.OrderID,
+		)
+		if err != nil {
+			serverError(w, err)
+			return
+		}
+
+		resp := OrderResponse{
 			Success: true,
 			Order:   order,
 		}
@@ -123,7 +166,7 @@ func ordersHandler() http.Handler {
 
 func serverError(w http.ResponseWriter, err error) {
 	if err != nil {
-		resp := PlaceOrderResponse{
+		resp := OrderResponse{
 			Success: false,
 			Error:   err.Error(),
 		}

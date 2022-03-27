@@ -29,13 +29,14 @@ func init() {
 }
 
 type Container struct {
-	conn         *gorm.DB
-	logger       *logrus.Logger
-	accountRepo  *account.AccountRepo
-	orderRepo    *order.OrderRepo
-	positionRepo *pos.PositionRepo
-	orderFiller  *activity.Filler
-	orderPlacer  *activity.OrderPlacer
+	conn           *gorm.DB
+	logger         *logrus.Logger
+	accountRepo    *account.AccountRepo
+	orderRepo      *order.OrderRepo
+	positionRepo   *pos.PositionRepo
+	orderFiller    *activity.Filler
+	orderPlacer    *activity.OrderPlacer
+	orderCanceller *activity.OrderCanceller
 }
 
 func NewContainer() (*Container, error) {
@@ -82,14 +83,17 @@ func NewContainer() (*Container, error) {
 
 	orderPlacer := activity.NewOrderPlacer(accountRepo, orderRepo, positionRepo)
 
+	orderCanceller := activity.NewOrderCanceller(accountRepo, orderRepo)
+
 	return &Container{
-		conn:         conn,
-		logger:       logger,
-		accountRepo:  accountRepo,
-		orderRepo:    orderRepo,
-		positionRepo: positionRepo,
-		orderFiller:  filler,
-		orderPlacer:  orderPlacer,
+		conn:           conn,
+		logger:         logger,
+		accountRepo:    accountRepo,
+		orderRepo:      orderRepo,
+		positionRepo:   positionRepo,
+		orderFiller:    filler,
+		orderPlacer:    orderPlacer,
+		orderCanceller: orderCanceller,
 	}, nil
 }
 
@@ -111,6 +115,10 @@ func (c *Container) GetOrderFiller() *activity.Filler {
 
 func (c *Container) GetOrderPlacer() *activity.OrderPlacer {
 	return c.orderPlacer
+}
+
+func (c *Container) GetOrderCanceller() *activity.OrderCanceller {
+	return c.orderCanceller
 }
 
 func (c *Container) GetLogger() *logrus.Logger {

@@ -18,6 +18,7 @@ type OrderRepo interface {
 	Update(order *order.Order) error
 	WithPendingStatus() ([]order.Order, error)
 	WithAccountId(accountId int) ([]order.Order, error)
+	WithId(id int) (*order.Order, error)
 }
 
 type PositionRepo interface {

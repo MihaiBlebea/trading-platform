@@ -48,3 +48,13 @@ func (or *OrderRepo) WithAccountId(accountId int) ([]Order, error) {
 
 	return orders, err
 }
+
+func (or *OrderRepo) WithId(id int) (*Order, error) {
+	order := Order{}
+	err := or.conn.Where("id = ?", id).Find(&order).Error
+	if err != nil {
+		return &Order{}, err
+	}
+
+	return &order, err
+}
