@@ -6,6 +6,9 @@ on:
   pull_request:
     branches: [ master ]
 
+env:
+  SHA: ${GITHUB_SHA::8}
+  
 jobs:
 
   build:
@@ -27,4 +30,4 @@ jobs:
           USERNAME: ${{ secrets.DOCKER_USERNAME }}
           PASSWORD: ${{ secrets.DOCKER_PASSWORD }}
           IMAGE_NAME: serbanblebea
-          TAG_NAME: ${{GITHUB_SHA::8}}
+          TAG_NAME: ${{ env.SHA }}
