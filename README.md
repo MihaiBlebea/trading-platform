@@ -1,3 +1,5 @@
+[![Docker Image CI](https://github.com/MihaiBlebea/trading-platform/actions/workflows/docker-image.yml/badge.svg?branch=master&event=push)](https://github.com/MihaiBlebea/trading-platform/actions/workflows/docker-image.yml)
+
 ## How to install?
 
 - Add env variables to the .env file
