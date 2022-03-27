@@ -15,18 +15,22 @@ jobs:
     steps:
     - uses: actions/checkout@v2
     - name: Build the Docker image
-      run: docker build . --file Dockerfile --tag serbanblebea:$(date +%s)
+      run: docker build . --file Dockerfile --tag serbanblebea:$(git rev-parse --short "$GITHUB_SHA")
   
-    - name: Docker Login
-    # You may pin to the exact commit or the version.
-    # uses: docker/login-action@dd4fa0671be5250ee6f50aedf4cb05514abda2c7
-      uses: docker/login-action@v1.14.1
-      with:
-        # Username used to log against the Docker registry
-        username: serbanblebea
-        # Password or personal access token used to log against the Docker registry
-        password: highprotein07
-        logout: false
+#     - name: Docker Login
+#     # You may pin to the exact commit or the version.
+#     # uses: docker/login-action@dd4fa0671be5250ee6f50aedf4cb05514abda2c7
+#       uses: docker/login-action@v1.14.1
+#       with:
+#         # Username used to log against the Docker registry
+#         username: serbanblebea
+#         # Password or personal access token used to log against the Docker registry
+#         password: highprotein07
+#         logout: false
       
     - name: Docker Push
       uses: opspresso/action-docker@v0.4.0
+      env:
+          USERNAME: ${{ secrets.DOCKER_USERNAME }}
+          PASSWORD: ${{ secrets.DOCKER_PASSWORD }}
+          TAG_NAME: serbanblebea:$(git rev-parse --short "$GITHUB_SHA")
