@@ -33,4 +33,5 @@ jobs:
       env:
           USERNAME: ${{ secrets.DOCKER_USERNAME }}
           PASSWORD: ${{ secrets.DOCKER_PASSWORD }}
-          TAG_NAME: serbanblebea:$(git rev-parse --short "$GITHUB_SHA")
+          IMAGE_NAME: serbanblebea
+          TAG_NAME: $(git rev-parse --short "$GITHUB_SHA")
