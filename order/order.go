@@ -30,6 +30,7 @@ const (
 
 type Order struct {
 	ID              int            `json:"id"`
+	ParentOrderID   int            `json:"parent_order_id"`
 	AccountID       int            `json:"-"`
 	Type            OrderType      `json:"type"`
 	Status          OrderStatus    `json:"status"`
@@ -56,13 +57,35 @@ func NewBuyOrder(accountId int, orderType, symbol string, amount float32) *Order
 	}
 }
 
-func NewSellOrder(accountId int, orderType, symbol string, quantity int) *Order {
+func NewSellOrder(accountID int, orderType, symbol string, quantity int) *Order {
 	return &Order{
-		AccountID: accountId,
+		AccountID: accountID,
 		Type:      OrderType(orderType),
 		Status:    StatusPending,
 		Direction: DirectionSell,
 		Quantity:  quantity,
+		Symbol:    strings.ToUpper(symbol),
+	}
+}
+
+func NewStopLossOrder(accountID, parentID int, symbol string, amount float32) *Order {
+	return &Order{
+		AccountID: accountID,
+		Type:      TypeStopLoss,
+		Status:    StatusPending,
+		Direction: DirectionBuy,
+		Amount:    amount,
+		Symbol:    strings.ToUpper(symbol),
+	}
+}
+
+func NewTakeProfitOrder(accountID, parentID int, symbol string, amount float32) *Order {
+	return &Order{
+		AccountID: accountID,
+		Type:      TypeTakeProfit,
+		Status:    StatusPending,
+		Direction: DirectionBuy,
+		Amount:    amount,
 		Symbol:    strings.ToUpper(symbol),
 	}
 }

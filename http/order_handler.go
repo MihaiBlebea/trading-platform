@@ -67,6 +67,8 @@ func placeOrderHandler() http.Handler {
 			req.Symbol,
 			req.Amount,
 			req.Quantity,
+			req.StopLoss,
+			req.TakeProfit,
 		)
 		if err != nil {
 			serverError(w, err)
