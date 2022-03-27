@@ -56,8 +56,12 @@ func (f *Filler) FillPendingOrders() error {
 			o.FillOrder(bidAsk.Bid)
 		}
 
-		err = f.updateInternalRecords(&o)
-		if err != nil {
+		if err := f.orderRepo.Update(&o); err != nil {
+			f.logger.Error(err)
+			continue
+		}
+
+		if err := f.updateInternalRecords(&o); err != nil {
 			f.logger.Error(err)
 			continue
 		}
@@ -67,10 +71,6 @@ func (f *Filler) FillPendingOrders() error {
 }
 
 func (f *Filler) updateInternalRecords(o *order.Order) error {
-	err := f.orderRepo.Update(o)
-	if err != nil {
-		return err
-	}
 	f.logger.Info(fmt.Sprintf("order filled id: %d", o.ID))
 
 	account, err := f.accountRepo.WithId(o.AccountID)
@@ -79,11 +79,8 @@ func (f *Filler) updateInternalRecords(o *order.Order) error {
 	}
 
 	account.UpdateBalance(o)
-	if err != nil {
-		return err
-	}
-	err = f.accountRepo.Update(account)
-	if err != nil {
+
+	if err := f.accountRepo.Update(account); err != nil {
 		return err
 	}
 	f.logger.Info(
@@ -94,8 +91,7 @@ func (f *Filler) updateInternalRecords(o *order.Order) error {
 		),
 	)
 
-	err = f.updatePosition(o)
-	if err != nil {
+	if err := f.updatePosition(o); err != nil {
 		return err
 	}
 
