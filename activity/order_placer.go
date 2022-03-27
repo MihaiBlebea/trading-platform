@@ -57,7 +57,7 @@ func (op *OrderPlacer) PlaceOrder(
 
 		if takeProfit != 0 {
 			_, err = op.orderRepo.Save(
-				order.NewTakeProfitOrder(account.ID, o.ID, symbol, stopLoss),
+				order.NewTakeProfitOrder(account.ID, o.ID, symbol, takeProfit),
 			)
 			if err != nil {
 				return &order.Order{}, err
