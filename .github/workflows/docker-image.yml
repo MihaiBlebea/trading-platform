@@ -27,4 +27,4 @@ jobs:
           USERNAME: ${{ secrets.DOCKER_USERNAME }}
           PASSWORD: ${{ secrets.DOCKER_PASSWORD }}
           IMAGE_NAME: serbanblebea
-          TAG_NAME: ${GITHUB_SHA::8}
+          TAG_NAME: ${{GITHUB_SHA::8}}
