@@ -19,7 +19,7 @@ jobs:
         
     - uses: actions/checkout@v2
     - name: Build the Docker image
-      run: docker build . --file Dockerfile --tag serbanblebea:${{ steps.vars.outputs.sha_short }}
+      run: docker build . --file Dockerfile --tag serbanblebea:{{ steps.vars.outputs.sha_short }}
   
 #     - name: Docker Login
 #     # You may pin to the exact commit or the version.
