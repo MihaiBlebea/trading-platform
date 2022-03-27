@@ -16,13 +16,10 @@ jobs:
     - name: Set outputs
       id: vars
       run: echo ${GITHUB_SHA::8}
-   
-    - name: Test set output
-      run: echo ${{ steps.vars.outputs.sha_short }}
         
     - uses: actions/checkout@v2
     - name: Build the Docker image
-      run: docker build . --file Dockerfile --tag serbanblebea:${{ steps.vars.outputs.sha_short }}
+      run: docker build . --file Dockerfile --tag serbanblebea:${GITHUB_SHA::8}
       
     - name: Docker Push
       uses: opspresso/action-docker@v0.4.0
@@ -30,4 +27,4 @@ jobs:
           USERNAME: ${{ secrets.DOCKER_USERNAME }}
           PASSWORD: ${{ secrets.DOCKER_PASSWORD }}
           IMAGE_NAME: serbanblebea
-          TAG_NAME: ${{ steps.vars.outputs.sha_short }}
+          TAG_NAME: ${GITHUB_SHA::8}
