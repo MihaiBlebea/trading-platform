@@ -4,7 +4,6 @@ import (
 	"errors"
 	"fmt"
 
-	"github.com/MihaiBlebea/trading-platform/account"
 	"github.com/MihaiBlebea/trading-platform/order"
 	"github.com/MihaiBlebea/trading-platform/pos"
 	"github.com/MihaiBlebea/trading-platform/quotes"
@@ -12,16 +11,16 @@ import (
 )
 
 type Filler struct {
-	accountRepo  *account.AccountRepo
-	orderRepo    *order.OrderRepo
-	positionRepo *pos.PositionRepo
+	accountRepo  AccountRepo
+	orderRepo    OrderRepo
+	positionRepo PositionRepo
 	logger       *logrus.Logger
 }
 
 func NewFiller(
-	accountRepo *account.AccountRepo,
-	orderRepo *order.OrderRepo,
-	positionRepo *pos.PositionRepo,
+	accountRepo AccountRepo,
+	orderRepo OrderRepo,
+	positionRepo PositionRepo,
 	logger *logrus.Logger) *Filler {
 
 	return &Filler{

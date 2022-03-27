@@ -7,8 +7,8 @@ type AccountRepoMock struct {
 }
 
 func (ar *AccountRepoMock) Save(account *Account) (*Account, error) {
-	ar.accounts = append(ar.accounts, *account)
 	account.ID = len(ar.accounts) + 1
+	ar.accounts = append(ar.accounts, *account)
 
 	return account, nil
 }

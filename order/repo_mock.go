@@ -1,14 +1,16 @@
 package order
 
-import "errors"
+import (
+	"errors"
+)
 
 type OrderRepoMock struct {
 	orders []Order
 }
 
 func (or *OrderRepoMock) Save(order *Order) (*Order, error) {
-	or.orders = append(or.orders, *order)
 	order.ID = len(or.orders) + 1
+	or.orders = append(or.orders, *order)
 
 	return order, nil
 }
@@ -21,6 +23,16 @@ func (or *OrderRepoMock) Update(order *Order) error {
 	or.orders[order.ID-1] = *order
 
 	return nil
+}
+
+func (or *OrderRepoMock) WithId(id int) (*Order, error) {
+	for _, acc := range or.orders {
+		if acc.ID == id {
+			return &acc, nil
+		}
+	}
+
+	return &Order{}, errors.New("could not find record")
 }
 
 func (or *OrderRepoMock) WithPendingStatus() ([]Order, error) {
