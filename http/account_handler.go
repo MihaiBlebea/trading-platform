@@ -15,7 +15,7 @@ type AccountResponse struct {
 	Account *account.Account `json:"account,omitempty"`
 }
 
-func createAccountHandler() http.Handler {
+func CreateAccountHandler() http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 
 		di, err := di.NewContainer()
@@ -48,7 +48,7 @@ func createAccountHandler() http.Handler {
 	})
 }
 
-func accountHandler() http.Handler {
+func AccountHandler() http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		header := r.Header.Get("Authorization")
 		if header == "" {

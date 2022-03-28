@@ -18,7 +18,7 @@ import (
 var instance *Container
 
 func init() {
-	godotenv.Load("./.env")
+	godotenv.Load("./../.env")
 
 	container, err := NewContainer()
 	if err != nil {

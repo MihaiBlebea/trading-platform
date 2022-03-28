@@ -30,10 +30,10 @@ func New(logger *logrus.Logger) {
 		Methods(http.MethodGet)
 
 	// Account endpoints
-	api.Handle("/account", createAccountHandler()).
+	api.Handle("/account", CreateAccountHandler()).
 		Methods(http.MethodPost)
 
-	api.Handle("/account", accountHandler()).
+	api.Handle("/account", AccountHandler()).
 		Methods(http.MethodGet)
 
 	// Order endpoints
