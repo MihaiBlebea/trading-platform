@@ -15,28 +15,20 @@ type AccountResponse struct {
 	Account *account.Account `json:"account,omitempty"`
 }
 
-func createAccountHandler() http.Handler {
+func CreateAccountHandler() http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 
-		di, err := di.NewContainer()
+		di := di.NewContainer()
+
+		accountRepo, err := di.GetAccountRepo()
 		if err != nil {
-			resp := AccountResponse{
-				Success: false,
-				Error:   err.Error(),
-			}
-			sendResponse(w, resp, http.StatusInternalServerError)
+			serverError(w, err)
 			return
 		}
 
-		accountRepo := di.GetAccountRepo()
-
 		account, err := accountRepo.Save(account.NewAccount())
 		if err != nil {
-			resp := AccountResponse{
-				Success: false,
-				Error:   err.Error(),
-			}
-			sendResponse(w, resp, http.StatusInternalServerError)
+			serverError(w, err)
 			return
 		}
 
@@ -48,7 +40,7 @@ func createAccountHandler() http.Handler {
 	})
 }
 
-func accountHandler() http.Handler {
+func AccountHandler() http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		header := r.Header.Get("Authorization")
 		if header == "" {
@@ -57,25 +49,17 @@ func accountHandler() http.Handler {
 		}
 		apiToken := strings.Split(header, "Bearer ")[1]
 
-		di, err := di.NewContainer()
+		di := di.NewContainer()
+
+		accountRepo, err := di.GetAccountRepo()
 		if err != nil {
-			resp := AccountResponse{
-				Success: false,
-				Error:   err.Error(),
-			}
-			sendResponse(w, resp, http.StatusInternalServerError)
+			serverError(w, err)
 			return
 		}
 
-		accountRepo := di.GetAccountRepo()
-
 		account, err := accountRepo.WithToken(apiToken)
 		if err != nil {
-			resp := AccountResponse{
-				Success: false,
-				Error:   err.Error(),
-			}
-			sendResponse(w, resp, http.StatusInternalServerError)
+			serverError(w, err)
 			return
 		}
 

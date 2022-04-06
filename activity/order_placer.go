@@ -31,7 +31,9 @@ func (op *OrderPlacer) PlaceOrder(
 	direction,
 	symbol string,
 	amount float32,
-	quantity int) (*order.Order, error) {
+	quantity int,
+	stopLoss float32,
+	takeProfit float32) (*order.Order, error) {
 
 	account, err := op.accountRepo.WithToken(apiToken)
 	if err != nil {
@@ -39,7 +41,30 @@ func (op *OrderPlacer) PlaceOrder(
 	}
 
 	if direction == string(order.DirectionBuy) {
-		return op.PlaceBuyOrder(account, orderType, symbol, amount)
+		o, err := op.PlaceBuyOrder(account, orderType, symbol, amount)
+		if err != nil {
+			return &order.Order{}, err
+		}
+
+		if stopLoss != 0 {
+			_, err = op.orderRepo.Save(
+				order.NewStopLossOrder(account.ID, o.ID, symbol, stopLoss),
+			)
+			if err != nil {
+				return &order.Order{}, err
+			}
+		}
+
+		if takeProfit != 0 {
+			_, err = op.orderRepo.Save(
+				order.NewTakeProfitOrder(account.ID, o.ID, symbol, takeProfit),
+			)
+			if err != nil {
+				return &order.Order{}, err
+			}
+		}
+
+		return o, nil
 	}
 
 	return op.PlaceSellOrder(account, orderType, symbol, quantity)
@@ -99,11 +124,6 @@ func (op *OrderPlacer) PlaceSellOrder(
 
 	o := order.NewSellOrder(account.ID, orderType, symbol, quantity)
 	o, err = op.orderRepo.Save(o)
-	if err != nil {
-		return &order.Order{}, err
-	}
-
-	err = op.accountRepo.Update(account)
 	if err != nil {
 		return &order.Order{}, err
 	}

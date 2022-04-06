@@ -38,6 +38,8 @@ func TestCanPlaceBuyOrder(t *testing.T) {
 		symbol,
 		amount,
 		0,
+		0,
+		0,
 	)
 	if err != nil {
 		t.Errorf("error message: %s", err)
@@ -107,6 +109,8 @@ func TestCanPlaceSellOrder(t *testing.T) {
 		symbol,
 		0,
 		quantity,
+		0,
+		0,
 	)
 	if err != nil {
 		t.Errorf("error message: %s", err)
@@ -176,6 +180,8 @@ func TestSellOrderInsufficientQuantity(t *testing.T) {
 		symbol,
 		0,
 		quantity,
+		0,
+		0,
 	)
 	errMessage := "position quantity is too low"
 	if err.Error() != errMessage {

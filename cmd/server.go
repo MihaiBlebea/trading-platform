@@ -24,12 +24,12 @@ var startServerCmd = &cobra.Command{
 	RunE: func(cmd *cobra.Command, args []string) error {
 		fmt.Println("Server is starting")
 
-		di, err := di.NewContainer()
+		di := di.NewContainer()
+
+		orderFiller, err := di.GetOrderFiller()
 		if err != nil {
 			return err
 		}
-
-		orderFiller := di.GetOrderFiller()
 
 		logger := di.GetLogger()
 
