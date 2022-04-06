@@ -9,6 +9,7 @@ import (
 	"github.com/MihaiBlebea/trading-platform/activity"
 	"github.com/MihaiBlebea/trading-platform/order"
 	"github.com/MihaiBlebea/trading-platform/pos"
+	"github.com/MihaiBlebea/trading-platform/symbols"
 	"github.com/joho/godotenv"
 	"github.com/sirupsen/logrus"
 	"gorm.io/driver/postgres"
@@ -18,7 +19,10 @@ import (
 var instance *Container
 
 func init() {
-	godotenv.Load("./../.env")
+	err := godotenv.Load("./.env")
+	if err != nil {
+		log.Fatal(err)
+	}
 
 	container, err := NewContainer()
 	if err != nil {
@@ -34,6 +38,7 @@ type Container struct {
 	accountRepo    *account.AccountRepo
 	orderRepo      *order.OrderRepo
 	positionRepo   *pos.PositionRepo
+	symbolRepo     *symbols.SymbolRepo
 	orderFiller    *activity.Filler
 	orderPlacer    *activity.OrderPlacer
 	orderCanceller *activity.OrderCanceller
@@ -79,6 +84,11 @@ func NewContainer() (*Container, error) {
 		return &Container{}, err
 	}
 
+	symbolRepo, err := symbols.NewSymbolRepo(conn)
+	if err != nil {
+		return &Container{}, err
+	}
+
 	filler := activity.NewFiller(accountRepo, orderRepo, positionRepo, logger)
 
 	orderPlacer := activity.NewOrderPlacer(accountRepo, orderRepo, positionRepo)
@@ -91,6 +101,7 @@ func NewContainer() (*Container, error) {
 		accountRepo:    accountRepo,
 		orderRepo:      orderRepo,
 		positionRepo:   positionRepo,
+		symbolRepo:     symbolRepo,
 		orderFiller:    filler,
 		orderPlacer:    orderPlacer,
 		orderCanceller: orderCanceller,
@@ -107,6 +118,10 @@ func (c *Container) GetOrderRepo() *order.OrderRepo {
 
 func (c *Container) GetPositionRepo() *pos.PositionRepo {
 	return c.positionRepo
+}
+
+func (c *Container) GetSymbolRepo() *symbols.SymbolRepo {
+	return c.symbolRepo
 }
 
 func (c *Container) GetOrderFiller() *activity.Filler {

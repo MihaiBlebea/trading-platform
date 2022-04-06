@@ -26,11 +26,7 @@ func positionsHandler() http.Handler {
 
 		di, err := di.NewContainer()
 		if err != nil {
-			resp := AccountResponse{
-				Success: false,
-				Error:   err.Error(),
-			}
-			sendResponse(w, resp, http.StatusInternalServerError)
+			serverError(w, err)
 			return
 		}
 

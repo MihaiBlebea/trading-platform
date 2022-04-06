@@ -1,6 +1,7 @@
 package http
 
 import (
+	"errors"
 	"net/http"
 	"strings"
 
@@ -20,30 +21,18 @@ func historicDataHandler() http.Handler {
 		query := r.URL.Query()
 		startDate := query.Get("start")
 		if startDate == "" {
-			resp := QuotesResponse{
-				Success: false,
-				Error:   "Invalid param start",
-			}
-			sendResponse(w, resp, http.StatusInternalServerError)
+			serverError(w, errors.New("Invalid start"))
 			return
 		}
 		symbol := query.Get("symbol")
 		if symbol == "" {
-			resp := QuotesResponse{
-				Success: false,
-				Error:   "Invalid param symbol",
-			}
-			sendResponse(w, resp, http.StatusInternalServerError)
+			serverError(w, errors.New("Invalid symbol"))
 			return
 		}
 
 		qs, err := q.GetQuotes(strings.ToUpper(symbol), startDate, "1m")
 		if err != nil {
-			resp := QuotesResponse{
-				Success: false,
-				Error:   err.Error(),
-			}
-			sendResponse(w, resp, http.StatusInternalServerError)
+			serverError(w, err)
 			return
 		}
 
