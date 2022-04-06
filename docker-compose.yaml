@@ -4,6 +4,8 @@ services:
     app:
         build: .
         container_name: app
+        depends_on:
+            - database
         ports:
             - 8080:8080
         env_file:
@@ -12,8 +14,12 @@ services:
     symbols:
         build: .
         container_name: symbols
+        depends_on:
+            - database
         env_file:
             - .env
+        volumes:
+            - ./assets:/app/assets
         command: ./trading-platform symbols
 
     database:

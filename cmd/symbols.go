@@ -30,7 +30,7 @@ var symbolsCmd = &cobra.Command{
 			return err
 		}
 
-		f, err := os.Open("freetrade_universe.csv")
+		f, err := os.Open("./assets/freetrade_universe.csv")
 		if err != nil {
 			return err
 		}
