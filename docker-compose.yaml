@@ -8,12 +8,20 @@ services:
             - 8080:8080
         env_file:
             - .env
+
+    symbols:
+        build: .
+        container_name: symbols
+        env_file:
+            - .env
+        command: ./trading-platform symbols
+
     database:
         image: "postgres"
         container_name: database
         env_file:
             - .env
-        # volumes:
-            # - ./volume/postgres:/var/lib/postgresql/data/
+        volumes:
+            - ./volume/postgres:/var/lib/postgresql/data/
         ports: 
             - 5432:5432
