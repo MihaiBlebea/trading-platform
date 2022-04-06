@@ -53,13 +53,14 @@ func placeOrderHandler() http.Handler {
 		}
 		apiToken := strings.Split(header, "Bearer ")[1]
 
-		di, err := di.NewContainer()
+		di := di.NewContainer()
+
+		orderPlacer, err := di.GetOrderPlacer()
 		if err != nil {
 			serverError(w, err)
 			return
 		}
 
-		orderPlacer := di.GetOrderPlacer()
 		order, err := orderPlacer.PlaceOrder(
 			apiToken,
 			req.Type,
@@ -100,13 +101,13 @@ func cancelOrderHandler() http.Handler {
 		}
 		apiToken := strings.Split(header, "Bearer ")[1]
 
-		di, err := di.NewContainer()
+		di := di.NewContainer()
+
+		orderCanceller, err := di.GetOrderCanceller()
 		if err != nil {
 			serverError(w, err)
 			return
 		}
-
-		orderCanceller := di.GetOrderCanceller()
 		order, err := orderCanceller.CancelOrder(
 			apiToken,
 			req.OrderID,
@@ -133,18 +134,18 @@ func ordersHandler() http.Handler {
 		}
 		apiToken := strings.Split(header, "Bearer ")[1]
 
-		di, err := di.NewContainer()
+		di := di.NewContainer()
+
+		accountRepo, err := di.GetAccountRepo()
 		if err != nil {
-			resp := AccountResponse{
-				Success: false,
-				Error:   err.Error(),
-			}
-			sendResponse(w, resp, http.StatusInternalServerError)
+			serverError(w, err)
 			return
 		}
-
-		accountRepo := di.GetAccountRepo()
-		orderRepo := di.GetOrderRepo()
+		orderRepo, err := di.GetOrderRepo()
+		if err != nil {
+			serverError(w, err)
+			return
+		}
 
 		account, err := accountRepo.WithToken(apiToken)
 		if err != nil {

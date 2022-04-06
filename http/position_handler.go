@@ -24,13 +24,13 @@ func positionsHandler() http.Handler {
 		}
 		apiToken := strings.Split(header, "Bearer ")[1]
 
-		di, err := di.NewContainer()
+		di := di.NewContainer()
+
+		accountRepo, err := di.GetAccountRepo()
 		if err != nil {
 			serverError(w, err)
 			return
 		}
-
-		accountRepo := di.GetAccountRepo()
 
 		account, err := accountRepo.WithToken(apiToken)
 		if err != nil {
@@ -38,7 +38,11 @@ func positionsHandler() http.Handler {
 			return
 		}
 
-		positionRepo := di.GetPositionRepo()
+		positionRepo, err := di.GetPositionRepo()
+		if err != nil {
+			serverError(w, err)
+			return
+		}
 
 		positions, err := positionRepo.WithAccountId(account.ID)
 		if err != nil {

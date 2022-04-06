@@ -23,12 +23,12 @@ var symbolsCmd = &cobra.Command{
 	RunE: func(cmd *cobra.Command, args []string) error {
 		fmt.Println("Starting to migrate symbols")
 
-		di, err := di.NewContainer()
+		di := di.NewContainer()
+
+		symbolRepo, err := di.GetSymbolRepo()
 		if err != nil {
 			return err
 		}
-
-		symbolRepo := di.GetSymbolRepo()
 
 		f, err := os.Open("freetrade_universe.csv")
 		if err != nil {

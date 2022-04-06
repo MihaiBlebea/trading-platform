@@ -16,20 +16,21 @@ type SymbolResponse struct {
 
 func symbolHandler() http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		di, err := di.NewContainer()
+		di := di.NewContainer()
+
+		query := r.URL.Query()
+		symbol := query.Get("symbol")
+		if symbol == "" {
+			serverError(w, errors.New("invalid symbol"))
+			return
+		}
+
+		symbolRepo, err := di.GetSymbolRepo()
 		if err != nil {
 			serverError(w, err)
 			return
 		}
 
-		query := r.URL.Query()
-		symbol := query.Get("symbol")
-		if symbol == "" {
-			serverError(w, errors.New("Invalid symbol"))
-			return
-		}
-
-		symbolRepo := di.GetSymbolRepo()
 		s, err := symbolRepo.WithSymbol(symbol)
 		if err != nil {
 			serverError(w, err)
