@@ -2,8 +2,8 @@ package cmd
 
 import (
 	"encoding/csv"
+	"errors"
 	"fmt"
-	"io"
 	"os"
 
 	"github.com/MihaiBlebea/trading-platform/di"
@@ -18,10 +18,14 @@ func init() {
 var symbolsCmd = &cobra.Command{
 	Use: "symbols",
 	Args: func(cmd *cobra.Command, args []string) error {
+		if len(args) == 0 {
+			return errors.New("provide at least one argument for the file path")
+		}
 		return nil
 	},
 	RunE: func(cmd *cobra.Command, args []string) error {
 		fmt.Println("Starting to migrate symbols")
+		filePath := args[0]
 
 		di := di.NewContainer()
 
@@ -30,7 +34,7 @@ var symbolsCmd = &cobra.Command{
 			return err
 		}
 
-		f, err := os.Open("./assets/freetrade_universe.csv")
+		f, err := os.Open(filePath)
 		if err != nil {
 			return err
 		}
@@ -42,23 +46,21 @@ var symbolsCmd = &cobra.Command{
 
 		uniqSimbols := map[string]bool{}
 
-		csvReader := csv.NewReader(f)
-		for {
-			rec, err := csvReader.Read()
-			if err == io.EOF {
-				break
-			}
-			if err != nil {
-				return err
-			}
+		filedata, err := csv.NewReader(f).ReadAll()
+		if err != nil {
+			return err
+		}
 
+		total := len(filedata)
+
+		for i, rec := range filedata {
 			symbolName := rec[7]
 
 			if symbolName == "Symbol" {
 				continue
 			}
 
-			fmt.Println("Processing symbol " + symbolName)
+			fmt.Printf("%d/%d Processing symbol %s\n", i, total, symbolName)
 
 			if _, ok := uniqSimbols[symbolName]; ok {
 				fmt.Println("Key already exists: " + symbolName)

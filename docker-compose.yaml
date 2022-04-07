@@ -8,6 +8,8 @@ services:
             - database
         ports:
             - 8080:8080
+        volumes:
+            - ./assets:/app/assets
         env_file:
             - .env
 
@@ -19,8 +21,8 @@ services:
         env_file:
             - .env
         volumes:
-            - ./assets:/app/assets
-        command: ./trading-platform symbols
+            - ./assets:/assets
+        command: ./wait-for-db.sh ./trading-platform symbols /app/assets/test.csv
 
     database:
         image: "postgres"

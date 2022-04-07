@@ -21,7 +21,7 @@ RUN go build -o ./out/trading-platform .
 FROM debian:buster
 
 RUN apt-get update \
-    && apt-get install -y --no-install-recommends sqlite3 ca-certificates
+    && apt-get install -y --no-install-recommends ca-certificates postgresql-client
 
 RUN update-ca-certificates
 
@@ -30,6 +30,8 @@ WORKDIR /app
 # Copy the go executable from the build stage
 COPY --from=build_base /tmp/app/out/trading-platform  /app/trading-platform 
 
+COPY ./wait-for-db.sh /app/wait-for-db.sh
+
 EXPOSE ${HTTP_PORT}
 
-CMD ./trading-platform  start-server
+CMD ./trading-platform start-server
