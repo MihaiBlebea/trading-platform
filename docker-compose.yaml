@@ -13,17 +13,6 @@ services:
         env_file:
             - .env
 
-    symbols:
-        build: .
-        container_name: symbols
-        depends_on:
-            - database
-        env_file:
-            - .env
-        volumes:
-            - ./assets:/assets
-        command: ./wait-for-db.sh ./trading-platform symbols ./assets/test.csv
-
     database:
         image: "postgres"
         container_name: database
