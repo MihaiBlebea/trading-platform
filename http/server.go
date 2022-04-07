@@ -54,6 +54,9 @@ func New(logger *logrus.Logger) {
 	api.Handle("/symbol", symbolHandler()).
 		Methods(http.MethodGet)
 
+	api.Handle("/symbols", symbolsHandler()).
+		Methods(http.MethodGet)
+
 	r.Use(loggerMiddleware(logger))
 
 	srv := &http.Server{

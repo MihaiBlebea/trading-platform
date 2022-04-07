@@ -50,3 +50,16 @@ func (sr *SymbolRepo) WithSymbol(symbol string) (*Symbol, error) {
 
 	return &sym, err
 }
+
+func (sr *SymbolRepo) LikeSymbol(symbol string) ([]Symbol, error) {
+	syms := []Symbol{}
+	err := sr.conn.Where(
+		"symbol LIKE ?",
+		strings.ToUpper(symbol)+"%",
+	).Limit(10).Find(&syms).Error
+	if err != nil {
+		return []Symbol{}, err
+	}
+
+	return syms, err
+}
