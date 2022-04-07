@@ -22,7 +22,7 @@ services:
             - .env
         volumes:
             - ./assets:/assets
-        command: ./wait-for-db.sh ./trading-platform symbols /app/assets/test.csv
+        command: ./wait-for-db.sh ./trading-platform symbols ./assets/test.csv
 
     database:
         image: "postgres"
