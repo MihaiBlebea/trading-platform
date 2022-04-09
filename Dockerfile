@@ -32,6 +32,8 @@ COPY --from=build_base /tmp/app/out/trading-platform  /app/trading-platform
 
 COPY ./wait-for-db.sh /app/wait-for-db.sh
 
+COPY ./assets /app/assets
+
 EXPOSE ${HTTP_PORT}
 
 CMD ./trading-platform start-server
