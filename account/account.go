@@ -3,6 +3,8 @@ package account
 import (
 	"math/rand"
 	"time"
+
+	"golang.org/x/crypto/bcrypt"
 )
 
 type Order interface {
@@ -13,6 +15,9 @@ type Order interface {
 
 type Account struct {
 	ID             int       `json:"-"`
+	Username       string    `json:"username"`
+	Email          string    `json:"email" gorm:"uniqueIndex"`
+	Password       string    `json:"-"`
 	ApiToken       string    `json:"api_token"`
 	Balance        float32   `json:"balance"`
 	PendingBalance float32   `json:"pending_balance"`
@@ -20,8 +25,19 @@ type Account struct {
 	UpdatedAt      time.Time `json:"-"`
 }
 
-func NewAccount() *Account {
-	return &Account{ApiToken: genApiKey(10), Balance: 10000.00}
+func NewAccount(username, email, password string) (*Account, error) {
+	hash, err := hashPassword(password)
+	if err != nil {
+		return &Account{}, err
+	}
+
+	return &Account{
+		Username: username,
+		Email:    email,
+		Password: hash,
+		ApiToken: genApiKey(10),
+		Balance:  10000.00,
+	}, nil
 }
 
 func genApiKey(n int) string {
@@ -37,6 +53,11 @@ func genApiKey(n int) string {
 	return string(b)
 }
 
+func hashPassword(password string) (string, error) {
+	bytes, err := bcrypt.GenerateFromPassword([]byte(password), 14)
+	return string(bytes), err
+}
+
 func (a *Account) UpdateBalance(order Order) {
 	a.Balance += order.GetTotalFillAmount()
 	if order.GetDirectionString() == "buy" {
@@ -46,4 +67,9 @@ func (a *Account) UpdateBalance(order Order) {
 
 func (a *Account) HasEnoughBalance(amount float32) bool {
 	return a.Balance-a.PendingBalance > amount
+}
+
+func (a *Account) CheckPasswordHash(password string) bool {
+	err := bcrypt.CompareHashAndPassword([]byte(a.Password), []byte(password))
+	return err == nil
 }

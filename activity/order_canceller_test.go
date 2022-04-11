@@ -10,9 +10,22 @@ import (
 	"github.com/MihaiBlebea/trading-platform/order"
 )
 
+func createAccount(t *testing.T, accountRepo activity.AccountRepo) account.Account {
+	a, err := account.NewAccount("FakeUsername", "test@gmail.com", "1234")
+	if err != nil {
+		t.Fatal("could not create an account")
+	}
+	account, err := accountRepo.Save(a)
+	if err != nil {
+		t.Fatal("could not create an account")
+	}
+
+	return *account
+}
+
 func TestCanCancelBuyOrder(t *testing.T) {
 	accountRepo := account.AccountRepoMock{}
-	account, _ := accountRepo.Save(account.NewAccount())
+	account := createAccount(t, &accountRepo)
 
 	orderRepo := order.OrderRepoMock{}
 

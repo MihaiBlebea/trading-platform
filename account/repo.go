@@ -58,3 +58,17 @@ func (ar *AccountRepo) WithId(id int) (*Account, error) {
 
 	return &account, err
 }
+
+func (ar *AccountRepo) WithEmail(email string) (*Account, error) {
+	account := Account{}
+	err := ar.conn.Where("email = ?", email).Find(&account).Error
+	if err != nil {
+		return &account, err
+	}
+
+	if account.ID == 0 {
+		return &account, errors.New("could not find record")
+	}
+
+	return &account, err
+}

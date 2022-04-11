@@ -12,7 +12,7 @@ import (
 
 func TestCanCreateAccount(t *testing.T) {
 	accountRepo := account.AccountRepoMock{}
-	account, _ := accountRepo.Save(account.NewAccount())
+	account := createAccount(t, &accountRepo)
 
 	if account.ApiToken == "" {
 		t.Error("could not create valid account")
@@ -21,7 +21,7 @@ func TestCanCreateAccount(t *testing.T) {
 
 func TestCanPlaceBuyOrder(t *testing.T) {
 	accountRepo := account.AccountRepoMock{}
-	account, _ := accountRepo.Save(account.NewAccount())
+	account := createAccount(t, &accountRepo)
 
 	orderPlacer := activity.NewOrderPlacer(
 		&accountRepo,
@@ -85,7 +85,7 @@ func TestCanPlaceBuyOrder(t *testing.T) {
 
 func TestCanPlaceSellOrder(t *testing.T) {
 	accountRepo := account.AccountRepoMock{}
-	account, _ := accountRepo.Save(account.NewAccount())
+	account := createAccount(t, &accountRepo)
 
 	orderRepo := order.OrderRepoMock{}
 	posRepo := pos.NewPositionRepoMock()
@@ -156,7 +156,7 @@ func TestCanPlaceSellOrder(t *testing.T) {
 
 func TestSellOrderInsufficientQuantity(t *testing.T) {
 	accountRepo := account.AccountRepoMock{}
-	account, _ := accountRepo.Save(account.NewAccount())
+	account := createAccount(t, &accountRepo)
 
 	orderRepo := order.OrderRepoMock{}
 	posRepo := pos.NewPositionRepoMock()

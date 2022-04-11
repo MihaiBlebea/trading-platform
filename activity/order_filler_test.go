@@ -16,7 +16,7 @@ func TestCanFillBuyOrder(t *testing.T) {
 	logger.Out = ioutil.Discard
 
 	accountRepo := account.AccountRepoMock{}
-	account, _ := accountRepo.Save(account.NewAccount())
+	account := createAccount(t, &accountRepo)
 
 	orderRepo := order.OrderRepoMock{}
 	posRepo := pos.NewPositionRepoMock()
@@ -70,7 +70,7 @@ func TestCanFillSellOrder(t *testing.T) {
 	logger.Out = ioutil.Discard
 
 	accountRepo := account.AccountRepoMock{}
-	account, _ := accountRepo.Save(account.NewAccount())
+	account := createAccount(t, &accountRepo)
 
 	orderRepo := order.OrderRepoMock{}
 	posRepo := pos.NewPositionRepoMock()
