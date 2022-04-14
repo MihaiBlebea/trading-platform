@@ -25,6 +25,7 @@ func NewOrderCanceller(
 func (oc *OrderCanceller) CancelOrder(
 	apiToken string,
 	orderId int) (*order.Order, error) {
+
 	if apiToken == "" {
 		return &order.Order{}, errors.New("api token cannot be null")
 	}

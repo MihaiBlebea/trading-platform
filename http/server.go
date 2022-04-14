@@ -60,6 +60,10 @@ func New(logger *logrus.Logger) {
 	api.Handle("/symbols", symbolsHandler()).
 		Methods(http.MethodGet)
 
+	// Market endpoints
+	api.Handle("/market", MarketStatusHandler()).
+		Methods(http.MethodGet)
+
 	r.Use(loggerMiddleware(logger))
 
 	srv := &http.Server{

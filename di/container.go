@@ -6,6 +6,7 @@ import (
 
 	"github.com/MihaiBlebea/trading-platform/account"
 	"github.com/MihaiBlebea/trading-platform/activity"
+	"github.com/MihaiBlebea/trading-platform/market"
 	"github.com/MihaiBlebea/trading-platform/order"
 	"github.com/MihaiBlebea/trading-platform/pos"
 	"github.com/MihaiBlebea/trading-platform/symbols"
@@ -37,6 +38,7 @@ type Container struct {
 	orderFiller    *activity.Filler
 	orderPlacer    *activity.OrderPlacer
 	orderCanceller *activity.OrderCanceller
+	marketStatus   *market.MarketStatus
 }
 
 func NewContainer() *Container {
@@ -178,7 +180,17 @@ func (c *Container) GetOrderFiller() (*activity.Filler, error) {
 		return &activity.Filler{}, err
 	}
 
-	orderFiller := activity.NewFiller(accountRepo, orderRepo, positionRepo, c.logger)
+	marketStatus, err := c.GetMarketStatus()
+	if err != nil {
+		return &activity.Filler{}, err
+	}
+
+	orderFiller := activity.NewFiller(
+		accountRepo,
+		orderRepo,
+		positionRepo,
+		marketStatus,
+		c.logger)
 
 	c.orderFiller = orderFiller
 
@@ -236,4 +248,16 @@ func (c *Container) GetOrderCanceller() (*activity.OrderCanceller, error) {
 
 func (c *Container) GetLogger() *logrus.Logger {
 	return c.logger
+}
+
+func (c *Container) GetMarketStatus() (*market.MarketStatus, error) {
+	if c.marketStatus != nil {
+		return c.marketStatus, nil
+	}
+
+	marketStatus := market.New(nil)
+
+	c.marketStatus = marketStatus
+
+	return c.marketStatus, nil
 }

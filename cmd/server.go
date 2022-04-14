@@ -35,9 +35,8 @@ var startServerCmd = &cobra.Command{
 
 		go func(orderFiller *activity.Filler) {
 			for {
-				err := orderFiller.FillPendingOrders()
-				if err != nil {
-					continue
+				if err := orderFiller.FillPendingOrders(); err != nil {
+					logger.Info(err)
 				}
 				time.Sleep(60 * time.Second)
 			}

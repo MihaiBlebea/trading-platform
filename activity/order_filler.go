@@ -14,6 +14,7 @@ type Filler struct {
 	accountRepo  AccountRepo
 	orderRepo    OrderRepo
 	positionRepo PositionRepo
+	marketStatus MarketStatus
 	logger       *logrus.Logger
 }
 
@@ -21,17 +22,24 @@ func NewFiller(
 	accountRepo AccountRepo,
 	orderRepo OrderRepo,
 	positionRepo PositionRepo,
+	marketStatus MarketStatus,
 	logger *logrus.Logger) *Filler {
 
 	return &Filler{
 		accountRepo:  accountRepo,
 		orderRepo:    orderRepo,
 		positionRepo: positionRepo,
+		marketStatus: marketStatus,
 		logger:       logger,
 	}
 }
 
 func (f *Filler) FillPendingOrders() error {
+
+	if !f.marketStatus.IsOpen() {
+		return errors.New("market is not open")
+	}
+
 	orders, err := f.orderRepo.WithPendingStatus()
 	if err != nil {
 		return err

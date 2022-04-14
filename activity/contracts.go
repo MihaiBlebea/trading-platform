@@ -28,3 +28,7 @@ type PositionRepo interface {
 	WithAccountId(accountId int) ([]pos.Position, error)
 	Delete(pos *pos.Position) error
 }
+
+type MarketStatus interface {
+	IsOpen() bool
+}

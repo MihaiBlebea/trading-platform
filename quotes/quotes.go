@@ -1,6 +1,7 @@
 package quotes
 
 import (
+	"fmt"
 	"time"
 
 	"github.com/piquette/finance-go/chart"
@@ -46,6 +47,7 @@ func (q *Quotes) GetQuotes(symbol string, startDate string, interval string) ([]
 
 func (q *Quotes) GetCurrentPrice(symbol string) (*BidAsk, error) {
 	raw, err := quote.Get(symbol)
+	fmt.Printf("%+v", raw)
 	if err != nil {
 		return &BidAsk{}, err
 	}
