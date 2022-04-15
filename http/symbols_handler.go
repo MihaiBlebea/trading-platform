@@ -31,13 +31,13 @@ func symbolHandler() http.Handler {
 			return
 		}
 
-		symbolRepo, err := di.GetSymbolRepo()
+		symbolService, err := di.GetSymbolService()
 		if err != nil {
 			serverError(w, err)
 			return
 		}
 
-		s, err := symbolRepo.WithSymbol(symbol)
+		s, err := symbolService.GetSymbol(symbol)
 		if err != nil {
 			serverError(w, err)
 			return

@@ -1,56 +1,77 @@
 package symbols
 
 import (
+	"context"
+	"encoding/json"
 	"fmt"
 	"io/ioutil"
 	"net/http"
 	"strings"
+	"time"
 
-	"github.com/tidwall/gjson"
+	"github.com/go-redis/redis/v8"
 )
-
-var modules string = "assetProfile,balanceSheetHistory,balanceSheetHistoryQuarterly,calendarEvents,cashflowStatementHistory,cashflowStatementHistoryQuarterly,defaultKeyStatistics,earnings,earningsHistory,earningsTrend,financialData,fundOwnership,incomeStatementHistory,incomeStatementHistoryQuarterly,indexTrend,industryTrend,insiderHolders,insiderTransactions,institutionOwnership,majorDirectHolders,majorHoldersBreakdown,netSharePurchaseActivity,price,quoteType,recommendationTrend,secFilings,sectorTrend,summaryDetail,summaryProfile,symbol,upgradeDowngradeHistory,fundProfile,topHoldings,fundPerformance"
 
 type Client struct {
 	baseUrl string
+	cache   *redis.Client
+	ttl     int
 }
 
-type SymbolData struct {
-	// Symbol              string `json:"symbol"`
-	LongBusinessSummary     string              `json:"longBusinessSummary"`
-	CashflowStatements      []CashFlowStatement `json:"cashflowStatements"`
-	ProfitMargins           float64             `json:"profitMargins"`
-	SharesOutstanding       int                 `json:"sharesOutstanding"`
-	Beta                    float64             `json:"beta"`
-	BookValue               float64             `json:"bookValue"`
-	PriceToBook             float64             `json:"priceToBook"`
-	EarningsQuarterlyGrowth float64             `json:"earningsQuarterlyGrowth"`
-}
-
-type CashFlowStatement struct {
-	EndDate                          string `json:"endDate"`
-	NetIncome                        int    `json:"netIncome"`
-	TotalCashFromOperatingActivities int    `json:"totalCashFromOperatingActivities"`
-	NetBorrowings                    int    `json:"netBorrowings"`
-}
-
-func NewClient(silent bool) *Client {
+func NewClient(cache *redis.Client) *Client {
 	return &Client{
-		baseUrl: "https://query2.finance.yahoo.com/v10/finance/quoteSummary",
+		baseUrl: "https://query2.finance.yahoo.com/v7/finance/quote",
+		cache:   cache,
+		ttl:     60,
 	}
 }
 
-func (c *Client) MakeRequest(symbol string) (*SymbolData, error) {
+func (c *Client) makeCacheRequest(symbols []string) ([]Quote, error) {
+	ctx := context.Background()
+	notFound := []string{}
+	found := []Quote{}
+	for _, symbol := range symbols {
+		res, err := c.cache.Get(ctx, symbol).Result()
+		if err != nil {
+			notFound = append(notFound, symbol)
+			continue
+		}
+
+		quote := Quote{}
+		if err := json.Unmarshal([]byte(res), &quote); err != nil {
+			fmt.Println(err)
+		}
+
+		found = append(found, quote)
+	}
+
+	quotes, err := c.makeRequest(notFound)
+	if err != nil {
+		return []Quote{}, err
+	}
+
+	for _, q := range quotes {
+		b, err := json.Marshal(q)
+		if err != nil {
+			return []Quote{}, err
+		}
+
+		c.cache.Set(ctx, q.Symbol, string(b), time.Second*time.Duration(c.ttl))
+	}
+
+	return append(found, quotes...), nil
+}
+
+func (c *Client) makeRequest(symbols []string) ([]Quote, error) {
 	url := fmt.Sprintf(
-		"%s/%s?modules=%s",
+		"%s?symbols=%s",
 		c.baseUrl,
-		strings.ToUpper(symbol),
-		modules,
+		strings.Join(symbols, ","),
 	)
 
 	req, err := http.NewRequest("GET", url, nil)
 	if err != nil {
-		return &SymbolData{}, err
+		return []Quote{}, err
 	}
 
 	req.Header.Set("User-Agent", "Mozilla/5.0")
@@ -58,81 +79,25 @@ func (c *Client) MakeRequest(symbol string) (*SymbolData, error) {
 	client := &http.Client{}
 	resp, err := client.Do(req)
 	if err != nil {
-		return &SymbolData{}, err
+		return []Quote{}, err
 	}
 
 	defer resp.Body.Close()
 
 	body, err := ioutil.ReadAll(resp.Body)
 	if err != nil {
-		return &SymbolData{}, err
+		return []Quote{}, err
 	}
 
-	symbolData := SymbolData{}
-	longBusinessSummary := gjson.Get(string(body), "quoteSummary.result.0.assetProfile.longBusinessSummary")
-	if longBusinessSummary.Exists() {
-		symbolData.LongBusinessSummary = longBusinessSummary.String()
+	var result struct {
+		QuoteResponse struct {
+			Result []Quote `json:"result"`
+		} `json:"quoteResponse"`
 	}
 
-	cashflowStatements := gjson.Get(string(body), "quoteSummary.result.0.cashflowStatementHistory.cashflowStatements")
-	if cashflowStatements.Exists() {
-		for _, cs := range cashflowStatements.Array() {
-
-			cashflowStatement := CashFlowStatement{}
-
-			endDate := gjson.Get(cs.String(), "endDate.fmt")
-			if endDate.Exists() {
-				cashflowStatement.EndDate = endDate.String()
-			}
-
-			netIncome := gjson.Get(cs.String(), "netIncome.raw")
-			if endDate.Exists() {
-				cashflowStatement.NetIncome = int(netIncome.Int())
-			}
-
-			totalCashFromOperatingActivities := gjson.Get(cs.String(), "totalCashFromOperatingActivities.raw")
-			if endDate.Exists() {
-				cashflowStatement.TotalCashFromOperatingActivities = int(totalCashFromOperatingActivities.Int())
-			}
-
-			netBorrowings := gjson.Get(cs.String(), "netBorrowings.raw")
-			if endDate.Exists() {
-				cashflowStatement.NetBorrowings = int(netBorrowings.Int())
-			}
-
-			symbolData.CashflowStatements = append(symbolData.CashflowStatements, cashflowStatement)
-		}
+	if err := json.Unmarshal(body, &result); err != nil {
+		return []Quote{}, err
 	}
 
-	profitMargins := gjson.Get(string(body), "quoteSummary.result.0.defaultKeyStatistics.profitMargins.raw")
-	if profitMargins.Exists() {
-		symbolData.ProfitMargins = profitMargins.Float()
-	}
-
-	sharesOutstanding := gjson.Get(string(body), "quoteSummary.result.0.defaultKeyStatistics.sharesOutstanding.raw")
-	if profitMargins.Exists() {
-		symbolData.SharesOutstanding = int(sharesOutstanding.Int())
-	}
-
-	beta := gjson.Get(string(body), "quoteSummary.result.0.defaultKeyStatistics.beta.raw")
-	if beta.Exists() {
-		symbolData.Beta = beta.Float()
-	}
-
-	bookValue := gjson.Get(string(body), "quoteSummary.result.0.defaultKeyStatistics.bookValue.raw")
-	if bookValue.Exists() {
-		symbolData.BookValue = bookValue.Float()
-	}
-
-	priceToBook := gjson.Get(string(body), "quoteSummary.result.0.defaultKeyStatistics.priceToBook.raw")
-	if priceToBook.Exists() {
-		symbolData.PriceToBook = priceToBook.Float()
-	}
-
-	earningsQuarterlyGrowth := gjson.Get(string(body), "quoteSummary.result.0.defaultKeyStatistics.earningsQuarterlyGrowth.raw")
-	if earningsQuarterlyGrowth.Exists() {
-		symbolData.EarningsQuarterlyGrowth = earningsQuarterlyGrowth.Float()
-	}
-
-	return &symbolData, nil
+	return result.QuoteResponse.Result, nil
 }

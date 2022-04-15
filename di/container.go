@@ -6,10 +6,10 @@ import (
 
 	"github.com/MihaiBlebea/trading-platform/account"
 	"github.com/MihaiBlebea/trading-platform/activity"
-	"github.com/MihaiBlebea/trading-platform/market"
 	"github.com/MihaiBlebea/trading-platform/order"
 	"github.com/MihaiBlebea/trading-platform/pos"
 	"github.com/MihaiBlebea/trading-platform/symbols"
+	"github.com/go-redis/redis/v8"
 	"github.com/joho/godotenv"
 	"github.com/sirupsen/logrus"
 	"gorm.io/driver/postgres"
@@ -29,16 +29,17 @@ func init() {
 }
 
 type Container struct {
-	conn           *gorm.DB
+	connDB         *gorm.DB
+	redisClient    *redis.Client
 	logger         *logrus.Logger
 	accountRepo    *account.AccountRepo
 	orderRepo      *order.OrderRepo
 	positionRepo   *pos.PositionRepo
 	symbolRepo     *symbols.SymbolRepo
+	symbolService  *symbols.Service
 	orderFiller    *activity.Filler
 	orderPlacer    *activity.OrderPlacer
 	orderCanceller *activity.OrderCanceller
-	marketStatus   *market.MarketStatus
 }
 
 func NewContainer() *Container {
@@ -58,8 +59,8 @@ func NewContainer() *Container {
 }
 
 func (c *Container) GetDatabaseConn() (*gorm.DB, error) {
-	if c.conn != nil {
-		return c.conn, nil
+	if c.connDB != nil {
+		return c.connDB, nil
 	}
 	dsn := fmt.Sprintf(
 		"host=%s user=%s password=%s dbname=%s port=%s sslmode=disable TimeZone=Europe/London",
@@ -75,9 +76,28 @@ func (c *Container) GetDatabaseConn() (*gorm.DB, error) {
 		return &gorm.DB{}, err
 	}
 
-	c.conn = conn
+	c.connDB = conn
 
-	return conn, nil
+	return c.connDB, nil
+}
+
+func (c *Container) GetRedisClient() (*redis.Client, error) {
+	if c.redisClient != nil {
+		return c.redisClient, nil
+	}
+	redisClient := redis.NewClient(&redis.Options{
+		Addr: fmt.Sprintf(
+			"%s:%s",
+			os.Getenv("REDIS_HOST"),
+			os.Getenv("REDIS_PORT"),
+		),
+		Password: "", // no password set
+		DB:       0,  // use default DB
+	})
+
+	c.redisClient = redisClient
+
+	return c.redisClient, nil
 }
 
 func (c *Container) GetAccountRepo() (*account.AccountRepo, error) {
@@ -160,6 +180,28 @@ func (c *Container) GetSymbolRepo() (*symbols.SymbolRepo, error) {
 	return c.symbolRepo, nil
 }
 
+func (c *Container) GetSymbolService() (*symbols.Service, error) {
+	if c.symbolService != nil {
+		return c.symbolService, nil
+	}
+
+	redisClient, err := c.GetRedisClient()
+	if err != nil {
+		return &symbols.Service{}, err
+	}
+
+	client := symbols.NewClient(redisClient)
+
+	symbolRepo, err := c.GetSymbolRepo()
+	if err != nil {
+		return &symbols.Service{}, err
+	}
+
+	c.symbolService = symbols.NewService(client, symbolRepo)
+
+	return c.symbolService, nil
+}
+
 func (c *Container) GetOrderFiller() (*activity.Filler, error) {
 	if c.orderFiller != nil {
 		return c.orderFiller, nil
@@ -180,7 +222,7 @@ func (c *Container) GetOrderFiller() (*activity.Filler, error) {
 		return &activity.Filler{}, err
 	}
 
-	marketStatus, err := c.GetMarketStatus()
+	symbolService, err := c.GetSymbolService()
 	if err != nil {
 		return &activity.Filler{}, err
 	}
@@ -189,7 +231,7 @@ func (c *Container) GetOrderFiller() (*activity.Filler, error) {
 		accountRepo,
 		orderRepo,
 		positionRepo,
-		marketStatus,
+		symbolService,
 		c.logger)
 
 	c.orderFiller = orderFiller
@@ -248,16 +290,4 @@ func (c *Container) GetOrderCanceller() (*activity.OrderCanceller, error) {
 
 func (c *Container) GetLogger() *logrus.Logger {
 	return c.logger
-}
-
-func (c *Container) GetMarketStatus() (*market.MarketStatus, error) {
-	if c.marketStatus != nil {
-		return c.marketStatus, nil
-	}
-
-	marketStatus := market.New(nil)
-
-	c.marketStatus = marketStatus
-
-	return c.marketStatus, nil
 }

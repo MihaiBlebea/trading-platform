@@ -29,6 +29,6 @@ type PositionRepo interface {
 	Delete(pos *pos.Position) error
 }
 
-type MarketStatus interface {
-	IsOpen() bool
+type SymbolService interface {
+	GetCurrentMarketStatus(symbol string) (ask float64, bid float64, isOpen bool, _ error)
 }

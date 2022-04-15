@@ -11,24 +11,24 @@ import (
 	"github.com/sirupsen/logrus"
 )
 
-type MarketStatus struct {
+type SymbolServiceStub struct {
 }
 
-func (m *MarketStatus) IsOpen() bool {
-	return true
+func (s *SymbolServiceStub) GetCurrentMarketStatus(symbol string) (float64, float64, bool, error) {
+	return 20, 22, true, nil
 }
 
 func TestCanFillBuyOrder(t *testing.T) {
 	logger := logrus.New()
 	logger.Out = ioutil.Discard
 
-	marketStatus := MarketStatus{}
-
 	accountRepo := account.AccountRepoMock{}
 	account := createAccount(t, &accountRepo)
 
 	orderRepo := order.OrderRepoMock{}
 	posRepo := pos.NewPositionRepoMock()
+
+	symbolService := SymbolServiceStub{}
 
 	amount := float32(1000.00)
 	symbol := "aapl"
@@ -51,7 +51,7 @@ func TestCanFillBuyOrder(t *testing.T) {
 		&accountRepo,
 		&orderRepo,
 		posRepo,
-		&marketStatus,
+		&symbolService,
 		logger,
 	)
 
@@ -79,13 +79,13 @@ func TestCanFillSellOrder(t *testing.T) {
 	logger := logrus.New()
 	logger.Out = ioutil.Discard
 
-	marketStatus := MarketStatus{}
-
 	accountRepo := account.AccountRepoMock{}
 	account := createAccount(t, &accountRepo)
 
 	orderRepo := order.OrderRepoMock{}
 	posRepo := pos.NewPositionRepoMock()
+
+	symbolService := SymbolServiceStub{}
 
 	symbol := "aapl"
 	quantity := 50
@@ -114,7 +114,7 @@ func TestCanFillSellOrder(t *testing.T) {
 		&accountRepo,
 		&orderRepo,
 		posRepo,
-		&marketStatus,
+		&symbolService,
 		logger,
 	)
 

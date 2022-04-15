@@ -40,8 +40,6 @@ var symbolsCmd = &cobra.Command{
 		}
 		defer f.Close()
 
-		client := symbs.NewClient(true)
-
 		symbols := []symbs.Symbol{}
 
 		uniqSimbols := map[string]bool{}
@@ -70,20 +68,6 @@ var symbolsCmd = &cobra.Command{
 			uniqSimbols[symbolName] = true
 
 			symbol := *symbs.NewSymbol(rec[0], rec[1], rec[2], rec[3], symbolName)
-
-			data, err := client.MakeRequest(symbolName)
-			if err != nil {
-				fmt.Printf("Error for symbol %s: %v", symbolName, err)
-			} else {
-				symbol.LongBusinessSummary = data.LongBusinessSummary
-				symbol.CashflowStatements = data.CashflowStatements
-				symbol.ProfitMargins = data.ProfitMargins
-				symbol.SharesOutstanding = data.SharesOutstanding
-				symbol.Beta = data.Beta
-				symbol.BookValue = data.BookValue
-				symbol.PriceToBook = data.PriceToBook
-				symbol.EarningsQuarterlyGrowth = data.EarningsQuarterlyGrowth
-			}
 
 			symbols = append(symbols, symbol)
 		}
