@@ -22,6 +22,16 @@ func (s *Service) Exists(symbol string) bool {
 	return true
 }
 
+func (s *Service) GetCurrentMarketStatus(symbol string) (ask float64, bid float64, _ bool, _ error) {
+	symb, err := s.GetSymbol(symbol)
+	if err != nil {
+		return 0, 0, false, err
+	}
+
+	return symb.Ask, symb.Bid, symb.IsMarketOpen(), nil
+
+}
+
 func (s *Service) GetSymbol(symbol string) (*Symbol, error) {
 	symbols, err := s.getSymbols([]string{symbol})
 	if err != nil {

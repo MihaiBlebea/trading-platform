@@ -6,28 +6,30 @@ import (
 
 	"github.com/MihaiBlebea/trading-platform/order"
 	"github.com/MihaiBlebea/trading-platform/pos"
-	"github.com/piquette/finance-go/quote"
 	"github.com/sirupsen/logrus"
 )
 
 type Filler struct {
-	accountRepo  AccountRepo
-	orderRepo    OrderRepo
-	positionRepo PositionRepo
-	logger       *logrus.Logger
+	accountRepo   AccountRepo
+	orderRepo     OrderRepo
+	positionRepo  PositionRepo
+	symbolService SymbolService
+	logger        *logrus.Logger
 }
 
 func NewFiller(
 	accountRepo AccountRepo,
 	orderRepo OrderRepo,
 	positionRepo PositionRepo,
+	symbolService SymbolService,
 	logger *logrus.Logger) *Filler {
 
 	return &Filler{
-		accountRepo:  accountRepo,
-		orderRepo:    orderRepo,
-		positionRepo: positionRepo,
-		logger:       logger,
+		accountRepo:   accountRepo,
+		orderRepo:     orderRepo,
+		positionRepo:  positionRepo,
+		symbolService: symbolService,
+		logger:        logger,
 	}
 }
 
@@ -43,21 +45,21 @@ func (f *Filler) FillPendingOrders() error {
 	}
 
 	for _, o := range orders {
-		quote, err := quote.Get(o.Symbol)
+		ask, bid, isOpen, err := f.symbolService.GetCurrentMarketStatus(o.Symbol)
 		if err != nil {
 			f.logger.Error(err)
 			continue
 		}
 
-		if quote.MarketState != "REGULAR" {
+		if !isOpen {
 			f.logger.Info("market is not open")
 			continue
 		}
 
 		if o.Direction == order.DirectionBuy {
-			o.FillOrder(float32(quote.Ask))
+			o.FillOrder(float32(ask))
 		} else {
-			o.FillOrder(float32(quote.Bid))
+			o.FillOrder(float32(bid))
 		}
 
 		if err := f.orderRepo.Update(&o); err != nil {

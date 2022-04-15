@@ -222,10 +222,16 @@ func (c *Container) GetOrderFiller() (*activity.Filler, error) {
 		return &activity.Filler{}, err
 	}
 
+	symbolService, err := c.GetSymbolService()
+	if err != nil {
+		return &activity.Filler{}, err
+	}
+
 	orderFiller := activity.NewFiller(
 		accountRepo,
 		orderRepo,
 		positionRepo,
+		symbolService,
 		c.logger)
 
 	c.orderFiller = orderFiller
