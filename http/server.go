@@ -25,10 +25,6 @@ func New(logger *logrus.Logger) {
 	api.Handle("/health-check", healthHandler()).
 		Methods(http.MethodGet)
 
-	// Data endpoints
-	api.Handle("/data/historic", historicDataHandler()).
-		Methods(http.MethodGet)
-
 	// Account endpoints
 	api.Handle("/login", LoginAccountHandler()).
 		Methods(http.MethodPost)
@@ -58,10 +54,6 @@ func New(logger *logrus.Logger) {
 		Methods(http.MethodGet)
 
 	api.Handle("/symbols", symbolsHandler()).
-		Methods(http.MethodGet)
-
-	// Market endpoints
-	api.Handle("/market", MarketStatusHandler()).
 		Methods(http.MethodGet)
 
 	r.Use(loggerMiddleware(logger))

@@ -1,31 +1,25 @@
 package symbols
 
 import (
-	"encoding/json"
 	"strings"
 	"time"
-
-	"gorm.io/gorm"
 )
 
 type Symbol struct {
-	ID                      int                 `json:"id"`
-	Title                   string              `json:"title"`
-	LongTitle               string              `json:"long_title"`
-	Industry                string              `json:"industry"`
-	Currency                string              `json:"currency"`
-	Symbol                  string              `json:"symbol" gorm:"uniqueIndex"`
-	LongBusinessSummary     string              `json:"longBusinessSummary"`
-	CashflowStatements      []CashFlowStatement `json:"cashflowStatements" gorm:"-"`
-	CashflowStatementsRaw   string              `json:"-"`
-	ProfitMargins           float64             `json:"profitMargins"`
-	SharesOutstanding       int                 `json:"sharesOutstanding"`
-	Beta                    float64             `json:"beta"`
-	BookValue               float64             `json:"bookValue"`
-	PriceToBook             float64             `json:"priceToBook"`
-	EarningsQuarterlyGrowth float64             `json:"earningsQuarterlyGrowth"`
-	CreatedAt               *time.Time          `json:"created_at"`
-	UpdatedAt               *time.Time          `json:"-"`
+	ID          int        `json:"id"`
+	Title       string     `json:"title"`
+	LongTitle   string     `json:"long_title"`
+	Industry    string     `json:"industry"`
+	Currency    string     `json:"currency"`
+	Symbol      string     `json:"symbol" gorm:"uniqueIndex"`
+	Description string     `json:"description,omitempty" gorm:"-:all"`
+	MarketCap   int        `json:"market_cap,omitempty" gorm:"-:all"`
+	Bid         float64    `json:"bid,omitempty" gorm:"-:all"`
+	Ask         float64    `json:"ask,omitempty" gorm:"-:all"`
+	MarketPrice float64    `json:"market_price,omitempty" gorm:"-:all"`
+	MarketState string     `json:"market_state,omitempty" gorm:"-:all"`
+	CreatedAt   *time.Time `json:"created_at"`
+	UpdatedAt   *time.Time `json:"-"`
 }
 
 func NewSymbol(title, longTitle, industry, currency, symbol string) *Symbol {
@@ -38,29 +32,13 @@ func NewSymbol(title, longTitle, industry, currency, symbol string) *Symbol {
 	}
 }
 
-func (s *Symbol) BeforeCreate(tx *gorm.DB) error {
-	b, err := json.Marshal(s.CashflowStatements)
-	if err != nil {
-		return err
-	}
-
-	s.CashflowStatementsRaw = string(b)
-
-	return nil
+func (s *Symbol) IsMarketOpen() bool {
+	return s.MarketState == "REGULAR"
 }
 
-func (s *Symbol) AfterFind(tx *gorm.DB) error {
-	if s.CashflowStatementsRaw == "" {
-		return nil
-	}
-
-	cfs := []CashFlowStatement{}
-
-	if err := json.Unmarshal([]byte(s.CashflowStatementsRaw), &cfs); err != nil {
-		return err
-	}
-
-	s.CashflowStatements = cfs
-
-	return nil
+func (s *Symbol) fromQuote(quote *Quote) {
+	s.Ask = quote.Ask
+	s.Bid = quote.Bid
+	s.MarketPrice = quote.RegularMarketPrice
+	s.MarketState = string(quote.MarketState)
 }

@@ -3,7 +3,7 @@ package cmd
 import (
 	"fmt"
 
-	"github.com/MihaiBlebea/trading-platform/quotes"
+	"github.com/MihaiBlebea/trading-platform/di"
 	"github.com/spf13/cobra"
 )
 
@@ -18,13 +18,25 @@ var testCmd = &cobra.Command{
 	},
 	RunE: func(cmd *cobra.Command, args []string) error {
 		fmt.Println("Testing...")
-		q := quotes.New()
-		bidAsk, err := q.GetCurrentPrice("AAPL")
+		// q := quotes.New()
+		// bidAsk, err := q.GetCurrentPrice("AAPL")
+		// if err != nil {
+		// 	return err
+		// }
+
+		// fmt.Printf("%+v", bidAsk)
+
+		service, err := di.NewContainer().GetSymbolService()
 		if err != nil {
 			return err
 		}
 
-		fmt.Printf("%+v", bidAsk)
+		s, err := service.GetSymbols([]string{"AAPL", "TSLA", "FB"})
+		if err != nil {
+			return err
+		}
+
+		fmt.Printf("%+v", s)
 
 		return nil
 	},

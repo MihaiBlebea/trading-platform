@@ -11,18 +11,9 @@ import (
 	"github.com/sirupsen/logrus"
 )
 
-type MarketStatus struct {
-}
-
-func (m *MarketStatus) IsOpen() bool {
-	return true
-}
-
 func TestCanFillBuyOrder(t *testing.T) {
 	logger := logrus.New()
 	logger.Out = ioutil.Discard
-
-	marketStatus := MarketStatus{}
 
 	accountRepo := account.AccountRepoMock{}
 	account := createAccount(t, &accountRepo)
@@ -51,7 +42,6 @@ func TestCanFillBuyOrder(t *testing.T) {
 		&accountRepo,
 		&orderRepo,
 		posRepo,
-		&marketStatus,
 		logger,
 	)
 
@@ -78,8 +68,6 @@ func TestCanFillBuyOrder(t *testing.T) {
 func TestCanFillSellOrder(t *testing.T) {
 	logger := logrus.New()
 	logger.Out = ioutil.Discard
-
-	marketStatus := MarketStatus{}
 
 	accountRepo := account.AccountRepoMock{}
 	account := createAccount(t, &accountRepo)
@@ -114,7 +102,6 @@ func TestCanFillSellOrder(t *testing.T) {
 		&accountRepo,
 		&orderRepo,
 		posRepo,
-		&marketStatus,
 		logger,
 	)
 
