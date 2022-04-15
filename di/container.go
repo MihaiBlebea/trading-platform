@@ -91,8 +91,8 @@ func (c *Container) GetRedisClient() (*redis.Client, error) {
 			os.Getenv("REDIS_HOST"),
 			os.Getenv("REDIS_PORT"),
 		),
-		Password: "", // no password set
-		DB:       0,  // use default DB
+		Password: os.Getenv("REDIS_PASSWORD"),
+		DB:       0, // use default DB
 	})
 
 	c.redisClient = redisClient
