@@ -55,6 +55,17 @@ func placeOrderHandler() http.Handler {
 
 		di := di.NewContainer()
 
+		symbolService, err := di.GetSymbolService()
+		if err != nil {
+			serverError(w, err)
+			return
+		}
+
+		if !symbolService.Exists(strings.ToUpper(req.Symbol)) {
+			serverError(w, errors.New("symbol not found"))
+			return
+		}
+
 		orderPlacer, err := di.GetOrderPlacer()
 		if err != nil {
 			serverError(w, err)
