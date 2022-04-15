@@ -20,6 +20,12 @@ type SymbolsResponse struct {
 	Symbols []symbols.Symbol `json:"symbols"`
 }
 
+type ChartResponse struct {
+	Success bool            `json:"success"`
+	Error   string          `json:"error,omitempty"`
+	Chart   []symbols.Chart `json:"chart,omitempty"`
+}
+
 func symbolHandler() http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		di := di.NewContainer()
@@ -77,6 +83,37 @@ func symbolsHandler() http.Handler {
 		resp := SymbolsResponse{
 			Success: true,
 			Symbols: symbols,
+		}
+		sendResponse(w, resp, http.StatusOK)
+	})
+}
+
+func chartHandler() http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		di := di.NewContainer()
+
+		query := r.URL.Query()
+		symbol := query.Get("symbol")
+		if symbol == "" {
+			serverError(w, errors.New("invalid symbol"))
+			return
+		}
+
+		symbolService, err := di.GetSymbolService()
+		if err != nil {
+			serverError(w, err)
+			return
+		}
+
+		charts, err := symbolService.GetChart(symbol)
+		if err != nil {
+			serverError(w, err)
+			return
+		}
+
+		resp := ChartResponse{
+			Success: true,
+			Chart:   charts,
 		}
 		sendResponse(w, resp, http.StatusOK)
 	})

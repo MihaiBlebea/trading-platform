@@ -29,7 +29,6 @@ func (s *Service) GetCurrentMarketStatus(symbol string) (ask float64, bid float6
 	}
 
 	return symb.Ask, symb.Bid, symb.IsMarketOpen(), nil
-
 }
 
 func (s *Service) GetSymbol(symbol string) (*Symbol, error) {
@@ -54,6 +53,10 @@ func (s *Service) GetSymbols(symbols []string) ([]Symbol, error) {
 	return tickers, nil
 }
 
+func (s *Service) GetChart(symbol string) ([]Chart, error) {
+	return s.client.makeChartRequest(symbol)
+}
+
 func (s *Service) getSymbols(symbols []string) ([]Symbol, error) {
 	upperSymbols := []string{}
 	for _, s := range symbols {
@@ -65,7 +68,7 @@ func (s *Service) getSymbols(symbols []string) ([]Symbol, error) {
 		return []Symbol{}, err
 	}
 
-	quotes, err := s.client.makeCacheRequest(upperSymbols)
+	quotes, err := s.client.makeQuoteCacheRequest(upperSymbols)
 	if err != nil {
 		return []Symbol{}, err
 	}

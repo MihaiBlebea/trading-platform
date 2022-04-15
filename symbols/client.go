@@ -10,23 +10,26 @@ import (
 	"time"
 
 	"github.com/go-redis/redis/v8"
+	"github.com/tidwall/gjson"
 )
 
 type Client struct {
-	baseUrl string
-	cache   *redis.Client
-	ttl     int
+	quoteBaseUrl string
+	chartBaseUrl string
+	cache        *redis.Client
+	ttl          int
 }
 
 func NewClient(cache *redis.Client) *Client {
 	return &Client{
-		baseUrl: "https://query2.finance.yahoo.com/v7/finance/quote",
-		cache:   cache,
-		ttl:     60,
+		quoteBaseUrl: "https://query2.finance.yahoo.com/v7/finance/quote",
+		chartBaseUrl: "https://query2.finance.yahoo.com/v8/finance/chart",
+		cache:        cache,
+		ttl:          60,
 	}
 }
 
-func (c *Client) makeCacheRequest(symbols []string) ([]Quote, error) {
+func (c *Client) makeQuoteCacheRequest(symbols []string) ([]Quote, error) {
 	ctx := context.Background()
 	notFound := []string{}
 	found := []Quote{}
@@ -45,7 +48,7 @@ func (c *Client) makeCacheRequest(symbols []string) ([]Quote, error) {
 		found = append(found, quote)
 	}
 
-	quotes, err := c.makeRequest(notFound)
+	quotes, err := c.makeQuoteRequest(notFound)
 	if err != nil {
 		return []Quote{}, err
 	}
@@ -62,10 +65,10 @@ func (c *Client) makeCacheRequest(symbols []string) ([]Quote, error) {
 	return append(found, quotes...), nil
 }
 
-func (c *Client) makeRequest(symbols []string) ([]Quote, error) {
+func (c *Client) makeQuoteRequest(symbols []string) ([]Quote, error) {
 	url := fmt.Sprintf(
 		"%s?symbols=%s",
-		c.baseUrl,
+		c.quoteBaseUrl,
 		strings.Join(symbols, ","),
 	)
 
@@ -100,4 +103,95 @@ func (c *Client) makeRequest(symbols []string) ([]Quote, error) {
 	}
 
 	return result.QuoteResponse.Result, nil
+}
+
+func (c *Client) makeChartRequest(symbol string) ([]Chart, error) {
+	url := fmt.Sprintf(
+		"%s/%s?range=%s",
+		c.chartBaseUrl,
+		strings.ToUpper(symbol),
+		"1d",
+	)
+
+	req, err := http.NewRequest("GET", url, nil)
+	if err != nil {
+		return []Chart{}, err
+	}
+
+	req.Header.Set("User-Agent", "Mozilla/5.0")
+
+	client := &http.Client{}
+	resp, err := client.Do(req)
+	if err != nil {
+		return []Chart{}, err
+	}
+
+	defer resp.Body.Close()
+
+	body, err := ioutil.ReadAll(resp.Body)
+	if err != nil {
+		return []Chart{}, err
+	}
+
+	timestamps := []int{}
+	timestampRaw := gjson.Get(string(body), "chart.result.0.timestamp")
+	if timestampRaw.Exists() {
+		for _, ts := range timestampRaw.Array() {
+			timestamps = append(timestamps, int(ts.Int()))
+		}
+	}
+
+	opens := []float64{}
+	openRaw := gjson.Get(string(body), "chart.result.0.indicators.quote.0.open")
+	if openRaw.Exists() {
+		for _, o := range openRaw.Array() {
+			opens = append(opens, o.Float())
+		}
+	}
+
+	closes := []float64{}
+	closeRaw := gjson.Get(string(body), "chart.result.0.indicators.quote.0.close")
+	if closeRaw.Exists() {
+		for _, c := range closeRaw.Array() {
+			closes = append(closes, c.Float())
+		}
+	}
+
+	highs := []float64{}
+	highRaw := gjson.Get(string(body), "chart.result.0.indicators.quote.0.high")
+	if highRaw.Exists() {
+		for _, h := range highRaw.Array() {
+			highs = append(highs, h.Float())
+		}
+	}
+
+	lows := []float64{}
+	lowRaw := gjson.Get(string(body), "chart.result.0.indicators.quote.0.low")
+	if lowRaw.Exists() {
+		for _, l := range lowRaw.Array() {
+			lows = append(lows, l.Float())
+		}
+	}
+
+	volumes := []int{}
+	volumeRaw := gjson.Get(string(body), "chart.result.0.indicators.quote.0.volume")
+	if volumeRaw.Exists() {
+		for _, v := range volumeRaw.Array() {
+			volumes = append(volumes, int(v.Int()))
+		}
+	}
+
+	charts := []Chart{}
+	for i, ts := range timestamps {
+		charts = append(charts, Chart{
+			High:      highs[i],
+			Low:       lows[i],
+			Open:      opens[i],
+			Close:     closes[i],
+			Volume:    volumes[i],
+			Timestamp: ts,
+		})
+	}
+
+	return charts, nil
 }
