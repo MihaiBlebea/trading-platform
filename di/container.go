@@ -9,6 +9,7 @@ import (
 	"github.com/MihaiBlebea/trading-platform/order"
 	"github.com/MihaiBlebea/trading-platform/pos"
 	"github.com/MihaiBlebea/trading-platform/symbols"
+	"github.com/MihaiBlebea/trading-platform/symbols/yahoofin"
 	"github.com/go-redis/redis/v8"
 	"github.com/joho/godotenv"
 	"github.com/sirupsen/logrus"
@@ -190,7 +191,10 @@ func (c *Container) GetSymbolService() (*symbols.Service, error) {
 		return &symbols.Service{}, err
 	}
 
-	client := symbols.NewClient(redisClient)
+	client := yahoofin.NewClientCache(
+		yahoofin.NewClient(),
+		redisClient,
+	)
 
 	symbolRepo, err := c.GetSymbolRepo()
 	if err != nil {

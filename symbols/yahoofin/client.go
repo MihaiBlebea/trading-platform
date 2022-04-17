@@ -1,71 +1,28 @@
-package symbols
+package yahoofin
 
 import (
-	"context"
 	"encoding/json"
 	"fmt"
 	"io/ioutil"
 	"net/http"
 	"strings"
-	"time"
 
-	"github.com/go-redis/redis/v8"
 	"github.com/tidwall/gjson"
 )
 
 type Client struct {
 	quoteBaseUrl string
 	chartBaseUrl string
-	cache        *redis.Client
-	ttl          int
 }
 
-func NewClient(cache *redis.Client) *Client {
+func NewClient() *Client {
 	return &Client{
 		quoteBaseUrl: "https://query2.finance.yahoo.com/v7/finance/quote",
 		chartBaseUrl: "https://query2.finance.yahoo.com/v8/finance/chart",
-		cache:        cache,
-		ttl:          60,
 	}
 }
 
-func (c *Client) makeQuoteCacheRequest(symbols []string) ([]Quote, error) {
-	ctx := context.Background()
-	notFound := []string{}
-	found := []Quote{}
-	for _, symbol := range symbols {
-		res, err := c.cache.Get(ctx, symbol).Result()
-		if err != nil {
-			notFound = append(notFound, symbol)
-			continue
-		}
-
-		quote := Quote{}
-		if err := json.Unmarshal([]byte(res), &quote); err != nil {
-			fmt.Println(err)
-		}
-
-		found = append(found, quote)
-	}
-
-	quotes, err := c.makeQuoteRequest(notFound)
-	if err != nil {
-		return []Quote{}, err
-	}
-
-	for _, q := range quotes {
-		b, err := json.Marshal(q)
-		if err != nil {
-			return []Quote{}, err
-		}
-
-		c.cache.Set(ctx, q.Symbol, string(b), time.Second*time.Duration(c.ttl))
-	}
-
-	return append(found, quotes...), nil
-}
-
-func (c *Client) makeQuoteRequest(symbols []string) ([]Quote, error) {
+func (c *Client) GetQuotes(symbols []string) ([]Quote, error) {
 	url := fmt.Sprintf(
 		"%s?symbols=%s",
 		c.quoteBaseUrl,
@@ -105,7 +62,7 @@ func (c *Client) makeQuoteRequest(symbols []string) ([]Quote, error) {
 	return result.QuoteResponse.Result, nil
 }
 
-func (c *Client) makeChartRequest(symbol string) ([]Chart, error) {
+func (c *Client) GetChart(symbol string) ([]Chart, error) {
 	url := fmt.Sprintf(
 		"%s/%s?range=%s",
 		c.chartBaseUrl,

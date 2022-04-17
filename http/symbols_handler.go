@@ -17,7 +17,7 @@ type SymbolResponse struct {
 type SymbolsResponse struct {
 	Success bool             `json:"success"`
 	Error   string           `json:"error,omitempty"`
-	Symbols []symbols.Symbol `json:"symbols"`
+	Symbols []symbols.Symbol `json:"symbols,omitempty"`
 }
 
 type ChartResponse struct {

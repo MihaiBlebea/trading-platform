@@ -30,3 +30,4 @@ services:
             - ./volume/redis:/data
         ports: 
             - 6379:6379
+        command: /bin/sh -c 'redis-server --appendonly yes --requirepass ${REDIS_PASSWORD}'

@@ -3,14 +3,21 @@ package symbols
 import (
 	"errors"
 	"strings"
+
+	"github.com/MihaiBlebea/trading-platform/symbols/yahoofin"
 )
 
+type YahooClient interface {
+	GetQuotes(symbols []string) ([]yahoofin.Quote, error)
+	GetChart(symbol string) ([]yahoofin.Chart, error)
+}
+
 type Service struct {
-	client *Client
+	client YahooClient
 	repo   *SymbolRepo
 }
 
-func NewService(client *Client, repo *SymbolRepo) *Service {
+func NewService(client YahooClient, repo *SymbolRepo) *Service {
 	return &Service{client, repo}
 }
 
@@ -54,7 +61,12 @@ func (s *Service) GetSymbols(symbols []string) ([]Symbol, error) {
 }
 
 func (s *Service) GetChart(symbol string) ([]Chart, error) {
-	return s.client.makeChartRequest(symbol)
+	charts, err := s.client.GetChart(symbol)
+	if err != nil {
+		return []Chart{}, err
+	}
+
+	return fromYahooCharts(charts), nil
 }
 
 func (s *Service) getSymbols(symbols []string) ([]Symbol, error) {
@@ -68,7 +80,7 @@ func (s *Service) getSymbols(symbols []string) ([]Symbol, error) {
 		return []Symbol{}, err
 	}
 
-	quotes, err := s.client.makeQuoteCacheRequest(upperSymbols)
+	quotes, err := s.client.GetQuotes(upperSymbols)
 	if err != nil {
 		return []Symbol{}, err
 	}

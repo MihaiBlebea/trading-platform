@@ -3,6 +3,8 @@ package symbols
 import (
 	"strings"
 	"time"
+
+	"github.com/MihaiBlebea/trading-platform/symbols/yahoofin"
 )
 
 type Symbol struct {
@@ -36,7 +38,7 @@ func (s *Symbol) IsMarketOpen() bool {
 	return s.MarketState == "REGULAR"
 }
 
-func (s *Symbol) fromQuote(quote *Quote) {
+func (s *Symbol) fromQuote(quote *yahoofin.Quote) {
 	s.Ask = quote.Ask
 	s.Bid = quote.Bid
 	s.MarketPrice = quote.RegularMarketPrice

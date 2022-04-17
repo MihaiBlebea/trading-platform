@@ -1,4 +1,4 @@
-package symbols
+package yahoofin
 
 type MarketState string
 
