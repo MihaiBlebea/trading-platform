@@ -40,6 +40,10 @@ func BuildContainer() *dig.Container {
 
 			return conn, nil
 		})
+
+		container.Provide(func(client *yahoofin.ClientCache, repo *symbols.SymbolRepo) *symbols.Service {
+			return symbols.NewService(client, repo)
+		})
 	} else {
 		container.Provide(func() (*gorm.DB, error) {
 			file := "file::memory:?cache=shared"
@@ -50,6 +54,12 @@ func BuildContainer() *dig.Container {
 			}
 
 			return conn, nil
+		})
+
+		container.Provide(yahoofin.NewStubClient)
+
+		container.Provide(func(client *yahoofin.ClientStub, repo *symbols.SymbolRepo) *symbols.Service {
+			return symbols.NewService(client, repo)
 		})
 	}
 
@@ -87,12 +97,7 @@ func BuildContainer() *dig.Container {
 	container.Provide(symbols.NewSymbolRepo)
 
 	container.Provide(yahoofin.NewClient)
-
 	container.Provide(yahoofin.NewClientCache)
-
-	container.Provide(func(client *yahoofin.ClientCache, repo *symbols.SymbolRepo) *symbols.Service {
-		return symbols.NewService(client, repo)
-	})
 
 	container.Provide(activity.NewFiller)
 
