@@ -12,12 +12,12 @@ import (
 
 type PlaceOrderRequest struct {
 	Symbol     string  `json:"symbol"`
-	Amount     float32 `json:"amount"`
+	Amount     float64 `json:"amount"`
 	Type       string  `json:"type"`
 	Direction  string  `json:"direction"`
 	Quantity   int     `json:"quantity"`
-	StopLoss   float32 `json:"stop-loss"`
-	TakeProfit float32 `json:"take-profit"`
+	StopLoss   float64 `json:"stop-loss"`
+	TakeProfit float64 `json:"take-profit"`
 }
 
 type CancelOrderRequest struct {

@@ -9,10 +9,10 @@ import (
 )
 
 func init() {
-	rootCmd.AddCommand(migrateCmd)
+	rootCmd.AddCommand(dropTableCmd)
 }
 
-var migrateCmd = &cobra.Command{
+var dropTableCmd = &cobra.Command{
 	Use: "drop-table",
 	Args: func(cmd *cobra.Command, args []string) error {
 		if len(args) == 0 {

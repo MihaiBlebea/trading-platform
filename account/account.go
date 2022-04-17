@@ -8,8 +8,8 @@ import (
 )
 
 type Order interface {
-	GetTotalFillAmount() float32
-	GetAmount() float32
+	GetTotalFillAmount() float64
+	GetAmount() float64
 	GetDirectionString() string
 }
 
@@ -19,8 +19,8 @@ type Account struct {
 	Email          string    `json:"email" gorm:"uniqueIndex"`
 	Password       string    `json:"-"`
 	ApiToken       string    `json:"api_token"`
-	Balance        float32   `json:"balance"`
-	PendingBalance float32   `json:"pending_balance"`
+	Balance        float64   `json:"balance"`
+	PendingBalance float64   `json:"pending_balance"`
 	CreatedAt      time.Time `json:"created_at"`
 	UpdatedAt      time.Time `json:"-"`
 }
@@ -65,7 +65,7 @@ func (a *Account) UpdateBalance(order Order) {
 	}
 }
 
-func (a *Account) HasEnoughBalance(amount float32) bool {
+func (a *Account) HasEnoughBalance(amount float64) bool {
 	return a.Balance-a.PendingBalance > amount
 }
 

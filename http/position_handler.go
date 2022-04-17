@@ -2,6 +2,7 @@ package http
 
 import (
 	"errors"
+	"fmt"
 	"net/http"
 	"strings"
 
@@ -50,10 +51,28 @@ func positionsHandler() http.Handler {
 			return
 		}
 
-		resp := PositionsResponse{
-			Success:   true,
-			Positions: positions,
+		symbolService, err := di.GetSymbolService()
+		if err != nil {
+			serverError(w, err)
+			return
 		}
+
+		resp := PositionsResponse{
+			Success: true,
+		}
+
+		for _, p := range positions {
+			s, err := symbolService.GetSymbol(p.Symbol)
+			if err != nil {
+				fmt.Println(err)
+				continue
+			}
+			p.TotalValue = s.MarketPrice * float64(p.Quantity)
+			p.CalculateAverageBoughtPrice()
+
+			resp.Positions = append(resp.Positions, p)
+		}
+
 		sendResponse(w, resp, http.StatusOK)
 	})
 }

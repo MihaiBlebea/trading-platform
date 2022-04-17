@@ -29,7 +29,7 @@ func TestCanPlaceBuyOrder(t *testing.T) {
 		&pos.PositionRepo{},
 	)
 
-	amount := float32(1000.00)
+	amount := float64(1000.00)
 	symbol := "aapl"
 	o, err := orderPlacer.PlaceOrder(
 		account.ApiToken,

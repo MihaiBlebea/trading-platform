@@ -35,9 +35,9 @@ type Order struct {
 	Type            OrderType      `json:"type"`
 	Status          OrderStatus    `json:"status"`
 	Direction       OrderDirection `json:"direction"`
-	Amount          float32        `json:"amount"`
-	FillPrice       float32        `json:"fill_price"`
-	AmountAfterFill float32        `json:"amount_after_fill"`
+	Amount          float64        `json:"amount"`
+	FillPrice       float64        `json:"fill_price"`
+	AmountAfterFill float64        `json:"amount_after_fill"`
 	Symbol          string         `json:"symbol"`
 	Quantity        int            `json:"quantity"`
 	FilledAt        *time.Time     `json:"filled_at,omitempty"`
@@ -46,7 +46,7 @@ type Order struct {
 	UpdatedAt       *time.Time     `json:"-"`
 }
 
-func NewBuyOrder(accountId int, orderType, symbol string, amount float32) *Order {
+func NewBuyOrder(accountId int, orderType, symbol string, amount float64) *Order {
 	return &Order{
 		AccountID: accountId,
 		Type:      OrderType(orderType),
@@ -68,7 +68,7 @@ func NewSellOrder(accountID int, orderType, symbol string, quantity int) *Order 
 	}
 }
 
-func NewStopLossOrder(accountID, parentID int, symbol string, amount float32) *Order {
+func NewStopLossOrder(accountID, parentID int, symbol string, amount float64) *Order {
 	return &Order{
 		AccountID:     accountID,
 		ParentOrderID: parentID,
@@ -80,7 +80,7 @@ func NewStopLossOrder(accountID, parentID int, symbol string, amount float32) *O
 	}
 }
 
-func NewTakeProfitOrder(accountID, parentID int, symbol string, amount float32) *Order {
+func NewTakeProfitOrder(accountID, parentID int, symbol string, amount float64) *Order {
 	return &Order{
 		AccountID:     accountID,
 		ParentOrderID: parentID,
@@ -92,7 +92,7 @@ func NewTakeProfitOrder(accountID, parentID int, symbol string, amount float32) 
 	}
 }
 
-func (o *Order) FillOrder(price float32) {
+func (o *Order) FillOrder(price float64) {
 	now := time.Now()
 	o.FillPrice = price
 	o.FilledAt = &now
@@ -100,17 +100,17 @@ func (o *Order) FillOrder(price float32) {
 	if o.Direction == DirectionBuy {
 		o.Quantity = int(o.Amount / price)
 	}
-	o.AmountAfterFill = o.FillPrice * float32(o.Quantity)
+	o.AmountAfterFill = o.FillPrice * float64(o.Quantity)
 	if o.Direction == DirectionBuy {
 		o.AmountAfterFill = -o.AmountAfterFill
 	}
 }
 
-func (o *Order) GetTotalFillAmount() float32 {
+func (o *Order) GetTotalFillAmount() float64 {
 	return o.AmountAfterFill
 }
 
-func (o *Order) GetAmount() float32 {
+func (o *Order) GetAmount() float64 {
 	return o.Amount
 }
 

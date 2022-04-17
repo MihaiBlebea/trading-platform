@@ -57,9 +57,9 @@ func (f *Filler) FillPendingOrders() error {
 		}
 
 		if o.Direction == order.DirectionBuy {
-			o.FillOrder(float32(ask))
+			o.FillOrder(ask)
 		} else {
-			o.FillOrder(float32(bid))
+			o.FillOrder(bid)
 		}
 
 		if err := f.orderRepo.Update(&o); err != nil {
@@ -119,7 +119,7 @@ func (f *Filler) updatePosition(o *order.Order) error {
 				return err
 			}
 		} else {
-			position.IncrementQuantity(o.Quantity)
+			position.IncrementQuantity(o.Quantity, o.FillPrice)
 			err := f.positionRepo.Update(position)
 			if err != nil {
 				return err

@@ -34,7 +34,7 @@ func TestCanCancelBuyOrder(t *testing.T) {
 		&orderRepo,
 	)
 
-	amount := float32(1000.00)
+	amount := float64(1000.00)
 	symbol := "aapl"
 	o, err := orderRepo.Save(order.NewBuyOrder(
 		account.ID,

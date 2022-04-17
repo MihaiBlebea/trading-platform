@@ -30,10 +30,10 @@ func (op *OrderPlacer) PlaceOrder(
 	orderType,
 	direction,
 	symbol string,
-	amount float32,
+	amount float64,
 	quantity int,
-	stopLoss float32,
-	takeProfit float32) (*order.Order, error) {
+	stopLoss float64,
+	takeProfit float64) (*order.Order, error) {
 
 	account, err := op.accountRepo.WithToken(apiToken)
 	if err != nil {
@@ -74,7 +74,7 @@ func (op *OrderPlacer) PlaceBuyOrder(
 	account *account.Account,
 	orderType,
 	symbol string,
-	amount float32) (*order.Order, error) {
+	amount float64) (*order.Order, error) {
 
 	if amount == 0 {
 		return &order.Order{}, errors.New("need to specify an amount greater than 0")
