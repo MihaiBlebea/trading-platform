@@ -13,13 +13,25 @@ import (
 	"github.com/MihaiBlebea/trading-platform/di"
 	handler "github.com/MihaiBlebea/trading-platform/http"
 	"github.com/gorilla/mux"
+	"gorm.io/gorm"
 )
 
 func init() {
 	os.Setenv("APP_ENV", "test")
 }
 
+func tearDown(t *testing.T) {
+	err := di.BuildContainer().Invoke(func(conn *gorm.DB) {
+		conn.Migrator().DropTable(account.Account{})
+	})
+	if err != nil {
+		t.Fatal(err)
+	}
+}
+
 func TestRegisterSuccess(t *testing.T) {
+	defer tearDown(t)
+
 	r := mux.NewRouter()
 	r.Handle("/api/v1/register", handler.RegisterAccountHandler()).Methods(http.MethodPost)
 
@@ -84,6 +96,8 @@ func TestRegisterSuccess(t *testing.T) {
 }
 
 func TestLoginSuccess(t *testing.T) {
+	defer tearDown(t)
+
 	password := "1234"
 	acc, err := account.NewAccount("mihaib", "mihai@gmail.com", password)
 	if err != nil {
@@ -163,6 +177,8 @@ func TestLoginSuccess(t *testing.T) {
 }
 
 func TestFetchAccount(t *testing.T) {
+	defer tearDown(t)
+
 	acc, err := account.NewAccount("mihaib", "mihai@gmail.com", "1234")
 	if err != nil {
 		t.Error(err)
