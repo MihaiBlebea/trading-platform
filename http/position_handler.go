@@ -6,8 +6,10 @@ import (
 	"net/http"
 	"strings"
 
+	"github.com/MihaiBlebea/trading-platform/account"
 	"github.com/MihaiBlebea/trading-platform/di"
 	"github.com/MihaiBlebea/trading-platform/pos"
+	"github.com/MihaiBlebea/trading-platform/symbols"
 )
 
 type PositionsResponse struct {
@@ -16,7 +18,7 @@ type PositionsResponse struct {
 	Positions []pos.Position `json:"positions"`
 }
 
-func positionsHandler() http.Handler {
+func PositionsHandler() http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		header := r.Header.Get("Authorization")
 		if header == "" {
@@ -25,54 +27,40 @@ func positionsHandler() http.Handler {
 		}
 		apiToken := strings.Split(header, "Bearer ")[1]
 
-		di := di.NewContainer()
-
-		accountRepo, err := di.GetAccountRepo()
-		if err != nil {
-			serverError(w, err)
-			return
-		}
-
-		account, err := accountRepo.WithToken(apiToken)
-		if err != nil {
-			serverError(w, err)
-			return
-		}
-
-		positionRepo, err := di.GetPositionRepo()
-		if err != nil {
-			serverError(w, err)
-			return
-		}
-
-		positions, err := positionRepo.WithAccountId(account.ID)
-		if err != nil {
-			serverError(w, err)
-			return
-		}
-
-		symbolService, err := di.GetSymbolService()
-		if err != nil {
-			serverError(w, err)
-			return
-		}
-
-		resp := PositionsResponse{
-			Success: true,
-		}
-
-		for _, p := range positions {
-			s, err := symbolService.GetSymbol(p.Symbol)
+		err := di.BuildContainer().Invoke(func(accountRepo *account.AccountRepo, positionRepo *pos.PositionRepo, symbolService *symbols.Service) {
+			account, err := accountRepo.WithToken(apiToken)
 			if err != nil {
-				fmt.Println(err)
-				continue
+				serverError(w, err)
+				return
 			}
-			p.TotalValue = s.MarketPrice * float64(p.Quantity)
-			p.CalculateAverageBoughtPrice()
 
-			resp.Positions = append(resp.Positions, p)
+			positions, err := positionRepo.WithAccountId(account.ID)
+			if err != nil {
+				serverError(w, err)
+				return
+			}
+
+			resp := PositionsResponse{
+				Success: true,
+			}
+
+			for _, p := range positions {
+				s, err := symbolService.GetSymbol(p.Symbol)
+				if err != nil {
+					fmt.Println(err)
+					continue
+				}
+				p.TotalValue = s.MarketPrice * float64(p.Quantity)
+				p.CalculateAverageBoughtPrice()
+
+				resp.Positions = append(resp.Positions, p)
+			}
+
+			sendResponse(w, resp, http.StatusOK)
+		})
+		if err != nil {
+			serverError(w, err)
+			return
 		}
-
-		sendResponse(w, resp, http.StatusOK)
 	})
 }

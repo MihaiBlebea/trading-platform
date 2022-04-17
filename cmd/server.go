@@ -7,6 +7,7 @@ import (
 	"github.com/MihaiBlebea/trading-platform/activity"
 	"github.com/MihaiBlebea/trading-platform/di"
 	"github.com/MihaiBlebea/trading-platform/http"
+	"github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
 )
 
@@ -24,26 +25,18 @@ var startServerCmd = &cobra.Command{
 	RunE: func(cmd *cobra.Command, args []string) error {
 		fmt.Println("Server is starting")
 
-		di := di.NewContainer()
-
-		orderFiller, err := di.GetOrderFiller()
-		if err != nil {
-			return err
-		}
-
-		logger := di.GetLogger()
-
-		go func(orderFiller *activity.Filler) {
-			for {
-				if err := orderFiller.FillPendingOrders(); err != nil {
-					logger.Info(err)
+		err := di.BuildContainer().Invoke(func(orderFiller *activity.Filler, logger *logrus.Logger) {
+			go func(orderFiller *activity.Filler) {
+				for {
+					if err := orderFiller.FillPendingOrders(); err != nil {
+						logger.Info(err)
+					}
+					time.Sleep(60 * time.Second)
 				}
-				time.Sleep(60 * time.Second)
-			}
-		}(orderFiller)
+			}(orderFiller)
 
-		http.New(logger)
-
-		return nil
+			http.New(logger)
+		})
+		return err
 	},
 }

@@ -8,3 +8,6 @@ docker: docker-build docker-run
 
 docker-stop:
 	docker stop trading_platform && docker rm trading_platform
+
+test:
+	go test -v ./...

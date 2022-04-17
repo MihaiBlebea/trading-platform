@@ -46,7 +46,7 @@ func New(logger *logrus.Logger) {
 		Methods(http.MethodGet)
 
 	// Position endpoints
-	api.Handle("/positions", positionsHandler()).
+	api.Handle("/positions", PositionsHandler()).
 		Methods(http.MethodGet)
 
 	// Symbols endpoints
