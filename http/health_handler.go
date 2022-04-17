@@ -6,6 +6,7 @@ import (
 	"net/http"
 
 	"github.com/MihaiBlebea/trading-platform/di"
+	"gorm.io/gorm"
 )
 
 type HealthResponse struct {
@@ -19,26 +20,23 @@ func healthHandler() http.Handler {
 		response := HealthResponse{}
 		response.Server = true
 
-		conn, err := di.NewContainer().GetDatabaseConn()
-		if err == nil {
-			response.Database = true
-		}
+		di.BuildContainer().Invoke(func(conn *gorm.DB) {
+			var tables []string
+			if err := conn.Table("information_schema.tables").Where("table_schema = ?", "public").Pluck("table_name", &tables).Error; err != nil {
+				response.Database = false
+			}
 
-		var tables []string
-		if err := conn.Table("information_schema.tables").Where("table_schema = ?", "public").Pluck("table_name", &tables).Error; err != nil {
-			response.Database = false
-		}
+			redisClient, err := di.NewContainer().GetRedisClient()
+			if err == nil {
+				response.Redis = true
+			}
 
-		redisClient, err := di.NewContainer().GetRedisClient()
-		if err == nil {
-			response.Redis = true
-		}
+			if _, err := redisClient.Keys(context.Background(), "*").Result(); err != nil {
+				response.Redis = false
+			}
 
-		if _, err := redisClient.Keys(context.Background(), "*").Result(); err != nil {
-			response.Redis = false
-		}
-
-		sendResponse(w, &response, http.StatusOK)
+			sendResponse(w, &response, http.StatusOK)
+		})
 	})
 }
 

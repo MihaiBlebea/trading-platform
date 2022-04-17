@@ -23,44 +23,9 @@ func BuildContainer() *dig.Container {
 	container := dig.New()
 
 	if os.Getenv("APP_ENV") == "prod" {
-		container.Provide(func() (*gorm.DB, error) {
-			dsn := fmt.Sprintf(
-				"host=%s user=%s password=%s dbname=%s port=%s sslmode=disable TimeZone=Europe/London",
-				os.Getenv("POSTGRES_HOST"),
-				os.Getenv("POSTGRES_USER"),
-				os.Getenv("POSTGRES_PASSWORD"),
-				os.Getenv("POSTGRES_DB"),
-				os.Getenv("POSTGRES_PORT"),
-			)
-
-			conn, err := gorm.Open(postgres.Open(dsn), &gorm.Config{})
-			if err != nil {
-				return &gorm.DB{}, err
-			}
-
-			return conn, nil
-		})
-
-		container.Provide(func(client *yahoofin.ClientCache, repo *symbols.SymbolRepo) *symbols.Service {
-			return symbols.NewService(client, repo)
-		})
+		buildForProd(container)
 	} else {
-		container.Provide(func() (*gorm.DB, error) {
-			file := "file::memory:?cache=shared"
-			// file := "gorm.db"
-			conn, err := gorm.Open(sqlite.Open(file), &gorm.Config{})
-			if err != nil {
-				return &gorm.DB{}, err
-			}
-
-			return conn, nil
-		})
-
-		container.Provide(yahoofin.NewStubClient)
-
-		container.Provide(func(client *yahoofin.ClientStub, repo *symbols.SymbolRepo) *symbols.Service {
-			return symbols.NewService(client, repo)
-		})
+		buildForLocal(container)
 	}
 
 	container.Provide(func() *logrus.Logger {
@@ -106,4 +71,53 @@ func BuildContainer() *dig.Container {
 	container.Provide(activity.NewOrderCanceller)
 
 	return container
+}
+
+func buildForProd(container *dig.Container) {
+	container.Provide(func() (*gorm.DB, error) {
+		dsn := fmt.Sprintf(
+			"host=%s user=%s password=%s dbname=%s port=%s sslmode=disable TimeZone=Europe/London",
+			os.Getenv("POSTGRES_HOST"),
+			os.Getenv("POSTGRES_USER"),
+			os.Getenv("POSTGRES_PASSWORD"),
+			os.Getenv("POSTGRES_DB"),
+			os.Getenv("POSTGRES_PORT"),
+		)
+
+		conn, err := gorm.Open(postgres.Open(dsn), &gorm.Config{})
+		if err != nil {
+			return &gorm.DB{}, err
+		}
+
+		return conn, nil
+	})
+
+	symbolServiceConst := func(client *yahoofin.ClientCache, repo *symbols.SymbolRepo) *symbols.Service {
+		return symbols.NewService(client, repo)
+	}
+
+	container.Provide(symbolServiceConst, dig.As(new(activity.SymbolService)))
+	container.Provide(symbolServiceConst)
+}
+
+func buildForLocal(container *dig.Container) {
+	container.Provide(func() (*gorm.DB, error) {
+		file := "file::memory:?cache=shared"
+		// file := "gorm.db"
+		conn, err := gorm.Open(sqlite.Open(file), &gorm.Config{})
+		if err != nil {
+			return &gorm.DB{}, err
+		}
+
+		return conn, nil
+	})
+
+	container.Provide(yahoofin.NewStubClient)
+
+	symbolServiceConst := func(client *yahoofin.ClientStub, repo *symbols.SymbolRepo) *symbols.Service {
+		return symbols.NewService(client, repo)
+	}
+
+	container.Provide(symbolServiceConst, dig.As(new(activity.SymbolService)))
+	container.Provide(symbolServiceConst)
 }
