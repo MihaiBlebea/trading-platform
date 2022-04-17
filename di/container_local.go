@@ -42,7 +42,9 @@ func BuildContainer() *dig.Container {
 		})
 	} else {
 		container.Provide(func() (*gorm.DB, error) {
-			conn, err := gorm.Open(sqlite.Open("file::memory:?cache=shared"), &gorm.Config{})
+			file := "file::memory:?cache=shared"
+			// file := "gorm.db"
+			conn, err := gorm.Open(sqlite.Open(file), &gorm.Config{})
 			if err != nil {
 				return &gorm.DB{}, err
 			}
@@ -73,10 +75,13 @@ func BuildContainer() *dig.Container {
 		})
 	})
 
+	container.Provide(account.NewAccountRepo, dig.As(new(activity.AccountRepo)))
 	container.Provide(account.NewAccountRepo)
 
+	container.Provide(order.NewOrderRepo, dig.As(new(activity.OrderRepo)))
 	container.Provide(order.NewOrderRepo)
 
+	container.Provide(pos.NewPositionRepo, dig.As(new(activity.PositionRepo)))
 	container.Provide(pos.NewPositionRepo)
 
 	container.Provide(symbols.NewSymbolRepo)

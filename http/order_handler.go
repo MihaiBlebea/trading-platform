@@ -6,8 +6,11 @@ import (
 	"net/http"
 	"strings"
 
+	"github.com/MihaiBlebea/trading-platform/account"
+	"github.com/MihaiBlebea/trading-platform/activity"
 	"github.com/MihaiBlebea/trading-platform/di"
 	"github.com/MihaiBlebea/trading-platform/order"
+	"github.com/MihaiBlebea/trading-platform/symbols"
 )
 
 type PlaceOrderRequest struct {
@@ -36,7 +39,7 @@ type OrdersResponse struct {
 	Orders  []order.Order `json:"orders"`
 }
 
-func placeOrderHandler() http.Handler {
+func PlaceOrderHandler() http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		var req PlaceOrderRequest
 
@@ -53,49 +56,44 @@ func placeOrderHandler() http.Handler {
 		}
 		apiToken := strings.Split(header, "Bearer ")[1]
 
-		di := di.NewContainer()
+		cont := di.BuildContainer()
 
-		symbolService, err := di.GetSymbolService()
+		err = cont.Invoke(func(symbolService *symbols.Service, orderPlacer *activity.OrderPlacer) {
+			if !symbolService.Exists(strings.ToUpper(req.Symbol)) {
+				serverError(w, errors.New("symbol not found"))
+				return
+			}
+
+			order, err := orderPlacer.PlaceOrder(
+				apiToken,
+				req.Type,
+				req.Direction,
+				req.Symbol,
+				req.Amount,
+				req.Quantity,
+				req.StopLoss,
+				req.TakeProfit,
+			)
+			if err != nil {
+				serverError(w, err)
+				return
+			}
+
+			resp := OrderResponse{
+				Success: true,
+				Order:   order,
+			}
+			sendResponse(w, resp, http.StatusOK)
+		})
+
 		if err != nil {
 			serverError(w, err)
 			return
 		}
-
-		if !symbolService.Exists(strings.ToUpper(req.Symbol)) {
-			serverError(w, errors.New("symbol not found"))
-			return
-		}
-
-		orderPlacer, err := di.GetOrderPlacer()
-		if err != nil {
-			serverError(w, err)
-			return
-		}
-
-		order, err := orderPlacer.PlaceOrder(
-			apiToken,
-			req.Type,
-			req.Direction,
-			req.Symbol,
-			req.Amount,
-			req.Quantity,
-			req.StopLoss,
-			req.TakeProfit,
-		)
-		if err != nil {
-			serverError(w, err)
-			return
-		}
-
-		resp := OrderResponse{
-			Success: true,
-			Order:   order,
-		}
-		sendResponse(w, resp, http.StatusOK)
 	})
 }
 
-func cancelOrderHandler() http.Handler {
+func CancelOrderHandler() http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		var req CancelOrderRequest
 
@@ -112,31 +110,30 @@ func cancelOrderHandler() http.Handler {
 		}
 		apiToken := strings.Split(header, "Bearer ")[1]
 
-		di := di.NewContainer()
+		err = di.BuildContainer().Invoke(func(orderCanceller *activity.OrderCanceller) {
+			order, err := orderCanceller.CancelOrder(
+				apiToken,
+				req.OrderID,
+			)
+			if err != nil {
+				serverError(w, err)
+				return
+			}
 
-		orderCanceller, err := di.GetOrderCanceller()
+			resp := OrderResponse{
+				Success: true,
+				Order:   order,
+			}
+			sendResponse(w, resp, http.StatusOK)
+		})
 		if err != nil {
 			serverError(w, err)
 			return
 		}
-		order, err := orderCanceller.CancelOrder(
-			apiToken,
-			req.OrderID,
-		)
-		if err != nil {
-			serverError(w, err)
-			return
-		}
-
-		resp := OrderResponse{
-			Success: true,
-			Order:   order,
-		}
-		sendResponse(w, resp, http.StatusOK)
 	})
 }
 
-func ordersHandler() http.Handler {
+func OrdersHandler() http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		header := r.Header.Get("Authorization")
 		if header == "" {
@@ -145,36 +142,29 @@ func ordersHandler() http.Handler {
 		}
 		apiToken := strings.Split(header, "Bearer ")[1]
 
-		di := di.NewContainer()
+		err := di.BuildContainer().Invoke(func(accountRepo *account.AccountRepo, orderRepo *order.OrderRepo) {
+			account, err := accountRepo.WithToken(apiToken)
+			if err != nil {
+				serverError(w, err)
+				return
+			}
 
-		accountRepo, err := di.GetAccountRepo()
+			orders, err := orderRepo.WithAccountId(account.ID)
+			if err != nil {
+				serverError(w, err)
+				return
+			}
+
+			resp := OrdersResponse{
+				Success: true,
+				Orders:  orders,
+			}
+			sendResponse(w, resp, http.StatusOK)
+		})
 		if err != nil {
 			serverError(w, err)
 			return
 		}
-		orderRepo, err := di.GetOrderRepo()
-		if err != nil {
-			serverError(w, err)
-			return
-		}
-
-		account, err := accountRepo.WithToken(apiToken)
-		if err != nil {
-			serverError(w, err)
-			return
-		}
-
-		orders, err := orderRepo.WithAccountId(account.ID)
-		if err != nil {
-			serverError(w, err)
-			return
-		}
-
-		resp := OrdersResponse{
-			Success: true,
-			Orders:  orders,
-		}
-		sendResponse(w, resp, http.StatusOK)
 	})
 }
 
