@@ -12,6 +12,9 @@ import (
 	"github.com/MihaiBlebea/trading-platform/account"
 	"github.com/MihaiBlebea/trading-platform/di"
 	handler "github.com/MihaiBlebea/trading-platform/http"
+	"github.com/MihaiBlebea/trading-platform/order"
+	"github.com/MihaiBlebea/trading-platform/pos"
+	"github.com/MihaiBlebea/trading-platform/symbols"
 	"github.com/gorilla/mux"
 	"gorm.io/gorm"
 )
@@ -22,7 +25,12 @@ func init() {
 
 func tearDown(t *testing.T) {
 	err := di.BuildContainer().Invoke(func(conn *gorm.DB) {
-		conn.Migrator().DropTable(account.Account{})
+		conn.Migrator().DropTable(
+			account.Account{},
+			pos.Position{},
+			order.Order{},
+			symbols.Symbol{},
+		)
 	})
 	if err != nil {
 		t.Fatal(err)

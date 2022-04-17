@@ -36,13 +36,13 @@ func New(logger *logrus.Logger) {
 		Methods(http.MethodGet)
 
 	// Order endpoints
-	api.Handle("/order", placeOrderHandler()).
+	api.Handle("/order", PlaceOrderHandler()).
 		Methods(http.MethodPost)
 
-	api.Handle("/order/cancel", cancelOrderHandler()).
+	api.Handle("/order/cancel", CancelOrderHandler()).
 		Methods(http.MethodPut)
 
-	api.Handle("/orders", ordersHandler()).
+	api.Handle("/orders", OrdersHandler()).
 		Methods(http.MethodGet)
 
 	// Position endpoints
