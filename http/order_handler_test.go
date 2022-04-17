@@ -310,3 +310,75 @@ func TestFetchOrders(t *testing.T) {
 		t.Errorf("expected order symbol to be APPL, got: %v", response.Orders[0].Symbol)
 	}
 }
+
+func TestCancelOrder(t *testing.T) {
+	defer tearDown(t)
+
+	// Create an account
+	acc, err := account.NewAccount("mihaib", "mihai@gmail.com", "1234")
+	if err != nil {
+		t.Error(err)
+		return
+	}
+
+	err = di.BuildContainer().Invoke(func(accountRepo *account.AccountRepo, orderRepo *order.OrderRepo) {
+		acc, err := accountRepo.Save(acc)
+		if err != nil {
+			t.Error(err)
+			return
+		}
+
+		_, err = orderRepo.Save(order.NewBuyOrder(acc.ID, "limit", "AAPL", float64(1000)))
+		if err != nil {
+			t.Error(err)
+			return
+		}
+	})
+	if err != nil {
+		t.Error(err)
+		return
+	}
+
+	r := mux.NewRouter()
+	r.Handle("/api/v1/order/cancel", handler.CancelOrderHandler()).Methods(http.MethodPut)
+
+	ts := httptest.NewServer(r)
+	defer ts.Close()
+
+	payload := handler.CancelOrderRequest{
+		OrderID: 1,
+	}
+	b, err := json.Marshal(payload)
+	if err != nil {
+		t.Error(err)
+		return
+	}
+
+	client := http.Client{}
+	req, err := http.NewRequest("PUT", ts.URL+"/api/v1/order/cancel", bytes.NewBuffer(b))
+	if err != nil {
+		t.Error(err)
+		return
+	}
+
+	req.Header.Set(
+		"Authorization",
+		fmt.Sprintf("Bearer %s", acc.ApiToken),
+	)
+
+	res, err := client.Do(req)
+	if err != nil {
+		t.Error(err)
+		return
+	}
+
+	response := handler.OrdersResponse{}
+	if err := json.NewDecoder(res.Body).Decode(&response); err != nil {
+		t.Error(err)
+		return
+	}
+
+	if response.Success != true {
+		t.Errorf("expected success to be true, got: %v", response.Success)
+	}
+}
