@@ -4,6 +4,7 @@ import (
 	"fmt"
 
 	"github.com/MihaiBlebea/trading-platform/di"
+	"github.com/MihaiBlebea/trading-platform/symbols"
 	"github.com/spf13/cobra"
 )
 
@@ -18,25 +19,16 @@ var testCmd = &cobra.Command{
 	},
 	RunE: func(cmd *cobra.Command, args []string) error {
 		fmt.Println("Testing...")
-		// q := quotes.New()
-		// bidAsk, err := q.GetCurrentPrice("AAPL")
-		// if err != nil {
-		// 	return err
-		// }
 
-		// fmt.Printf("%+v", bidAsk)
+		container := di.BuildContainer()
 
-		service, err := di.NewContainer().GetSymbolService()
+		err := container.Invoke(func(ss *symbols.Service) {
+			fmt.Println(ss.Exists("aapl"))
+		})
+
 		if err != nil {
 			return err
 		}
-
-		s, err := service.GetSymbols([]string{"AAPL", "TSLA", "FB"})
-		if err != nil {
-			return err
-		}
-
-		fmt.Printf("%+v", s)
 
 		return nil
 	},

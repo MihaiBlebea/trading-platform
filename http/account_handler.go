@@ -52,30 +52,31 @@ func RegisterAccountHandler() http.Handler {
 			return
 		}
 
-		di := di.NewContainer()
+		cont := di.BuildContainer()
 
-		accountRepo, err := di.GetAccountRepo()
+		err = cont.Invoke(func(accRepo *account.AccountRepo) {
+			account, err := account.NewAccount(req.Username, req.Email, req.Password)
+			if err != nil {
+				serverError(w, err)
+				return
+			}
+
+			if _, err := accRepo.Save(account); err != nil {
+				serverError(w, err)
+				return
+			}
+
+			resp := AccountResponse{
+				Success: true,
+				Account: account,
+			}
+			sendResponse(w, resp, http.StatusOK)
+		})
+
 		if err != nil {
 			serverError(w, err)
 			return
 		}
-
-		account, err := account.NewAccount(req.Username, req.Email, req.Password)
-		if err != nil {
-			serverError(w, err)
-			return
-		}
-
-		if _, err := accountRepo.Save(account); err != nil {
-			serverError(w, err)
-			return
-		}
-
-		resp := AccountResponse{
-			Success: true,
-			Account: account,
-		}
-		sendResponse(w, resp, http.StatusOK)
 	})
 }
 
@@ -89,30 +90,31 @@ func LoginAccountHandler() http.Handler {
 			return
 		}
 
-		di := di.NewContainer()
+		cont := di.BuildContainer()
 
-		accountRepo, err := di.GetAccountRepo()
+		err = cont.Invoke(func(accountRepo *account.AccountRepo) {
+			account, err := accountRepo.WithEmail(req.Email)
+			if err != nil {
+				serverError(w, errors.New("invalid credentials"))
+				return
+			}
+
+			if !account.CheckPasswordHash(req.Password) {
+				serverError(w, errors.New("invalid credentials"))
+				return
+			}
+
+			resp := AccountResponse{
+				Success: true,
+				Account: account,
+			}
+			sendResponse(w, resp, http.StatusOK)
+		})
+
 		if err != nil {
 			serverError(w, err)
 			return
 		}
-
-		account, err := accountRepo.WithEmail(req.Email)
-		if err != nil {
-			serverError(w, errors.New("invalid credentials"))
-			return
-		}
-
-		if account.CheckPasswordHash(req.Password) == false {
-			serverError(w, errors.New("invalid credentials"))
-			return
-		}
-
-		resp := AccountResponse{
-			Success: true,
-			Account: account,
-		}
-		sendResponse(w, resp, http.StatusOK)
 	})
 }
 
@@ -125,24 +127,25 @@ func AccountHandler() http.Handler {
 		}
 		apiToken := strings.Split(header, "Bearer ")[1]
 
-		di := di.NewContainer()
+		cont := di.BuildContainer()
 
-		accountRepo, err := di.GetAccountRepo()
+		err := cont.Invoke(func(accountRepo *account.AccountRepo) {
+			account, err := accountRepo.WithToken(apiToken)
+			if err != nil {
+				serverError(w, err)
+				return
+			}
+
+			resp := AccountResponse{
+				Success: true,
+				Account: account,
+			}
+			sendResponse(w, resp, http.StatusOK)
+		})
+
 		if err != nil {
 			serverError(w, err)
 			return
 		}
-
-		account, err := accountRepo.WithToken(apiToken)
-		if err != nil {
-			serverError(w, err)
-			return
-		}
-
-		resp := AccountResponse{
-			Success: true,
-			Account: account,
-		}
-		sendResponse(w, resp, http.StatusOK)
 	})
 }

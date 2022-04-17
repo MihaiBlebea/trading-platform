@@ -14,6 +14,7 @@ import (
 	"github.com/joho/godotenv"
 	"github.com/sirupsen/logrus"
 	"gorm.io/driver/postgres"
+	"gorm.io/driver/sqlite"
 	"gorm.io/gorm"
 )
 
@@ -31,6 +32,7 @@ func init() {
 
 type Container struct {
 	connDB         *gorm.DB
+	inMemoryConnDB *gorm.DB
 	redisClient    *redis.Client
 	logger         *logrus.Logger
 	accountRepo    *account.AccountRepo
@@ -80,6 +82,21 @@ func (c *Container) GetDatabaseConn() (*gorm.DB, error) {
 	c.connDB = conn
 
 	return c.connDB, nil
+}
+
+func (c *Container) GetInMemoryDatabaseConn() (*gorm.DB, error) {
+	if c.inMemoryConnDB != nil {
+		return c.inMemoryConnDB, nil
+	}
+
+	conn, err := gorm.Open(sqlite.Open("gorm.db"), &gorm.Config{})
+	if err != nil {
+		return &gorm.DB{}, err
+	}
+
+	c.inMemoryConnDB = conn
+
+	return c.inMemoryConnDB, nil
 }
 
 func (c *Container) GetRedisClient() (*redis.Client, error) {
