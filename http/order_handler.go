@@ -10,6 +10,7 @@ import (
 	"github.com/MihaiBlebea/trading-platform/activity"
 	"github.com/MihaiBlebea/trading-platform/order"
 	"github.com/MihaiBlebea/trading-platform/symbols"
+	"github.com/sirupsen/logrus"
 	"go.uber.org/dig"
 )
 
@@ -45,23 +46,24 @@ func PlaceOrderHandler(cont *dig.Container) http.Handler {
 
 		err := json.NewDecoder(r.Body).Decode(&req)
 		if err != nil {
-			serverError(w, err)
+			serverError(w, cont, err)
 			return
 		}
 
 		header := r.Header.Get("Authorization")
 		if header == "" {
-			serverError(w, errors.New("could not find authorization header"))
+			serverError(w, cont, errors.New("could not find authorization header"))
 			return
 		}
 		apiToken := strings.Split(header, "Bearer ")[1]
 
 		err = cont.Invoke(func(
 			symbolService *symbols.Service,
-			orderPlacer *activity.OrderPlacer) {
+			orderPlacer *activity.OrderPlacer,
+			logger *logrus.Logger) {
 
 			if !symbolService.Exists(strings.ToUpper(req.Symbol)) {
-				serverError(w, errors.New("symbol not found"))
+				serverError(w, cont, errors.New("symbol not found"))
 				return
 			}
 
@@ -76,7 +78,7 @@ func PlaceOrderHandler(cont *dig.Container) http.Handler {
 				req.TakeProfit,
 			)
 			if err != nil {
-				serverError(w, err)
+				serverError(w, cont, err)
 				return
 			}
 
@@ -84,10 +86,10 @@ func PlaceOrderHandler(cont *dig.Container) http.Handler {
 				Success: true,
 				Order:   order,
 			}
-			sendResponse(w, resp, http.StatusOK)
+			sendResponse(w, logger, resp, http.StatusOK)
 		})
 		if err != nil {
-			serverError(w, err)
+			serverError(w, cont, err)
 			return
 		}
 	})
@@ -99,24 +101,24 @@ func CancelOrderHandler(cont *dig.Container) http.Handler {
 
 		err := json.NewDecoder(r.Body).Decode(&req)
 		if err != nil {
-			serverError(w, err)
+			serverError(w, cont, err)
 			return
 		}
 
 		header := r.Header.Get("Authorization")
 		if header == "" {
-			serverError(w, errors.New("could not find authorization header"))
+			serverError(w, cont, errors.New("could not find authorization header"))
 			return
 		}
 		apiToken := strings.Split(header, "Bearer ")[1]
 
-		err = cont.Invoke(func(orderCanceller *activity.OrderCanceller) {
+		err = cont.Invoke(func(orderCanceller *activity.OrderCanceller, logger *logrus.Logger) {
 			order, err := orderCanceller.CancelOrder(
 				apiToken,
 				req.OrderID,
 			)
 			if err != nil {
-				serverError(w, err)
+				serverError(w, cont, err)
 				return
 			}
 
@@ -124,10 +126,10 @@ func CancelOrderHandler(cont *dig.Container) http.Handler {
 				Success: true,
 				Order:   order,
 			}
-			sendResponse(w, resp, http.StatusOK)
+			sendResponse(w, logger, resp, http.StatusOK)
 		})
 		if err != nil {
-			serverError(w, err)
+			serverError(w, cont, err)
 			return
 		}
 	})
@@ -137,24 +139,25 @@ func OrdersHandler(cont *dig.Container) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		header := r.Header.Get("Authorization")
 		if header == "" {
-			serverError(w, errors.New("could not find authorization header"))
+			serverError(w, cont, errors.New("could not find authorization header"))
 			return
 		}
 		apiToken := strings.Split(header, "Bearer ")[1]
 
 		err := cont.Invoke(func(
 			accountRepo *account.AccountRepo,
-			orderRepo *order.OrderRepo) {
+			orderRepo *order.OrderRepo,
+			logger *logrus.Logger) {
 
 			account, err := accountRepo.WithToken(apiToken)
 			if err != nil {
-				serverError(w, err)
+				serverError(w, cont, err)
 				return
 			}
 
 			orders, err := orderRepo.WithAccountId(account.ID)
 			if err != nil {
-				serverError(w, err)
+				serverError(w, cont, err)
 				return
 			}
 
@@ -162,21 +165,11 @@ func OrdersHandler(cont *dig.Container) http.Handler {
 				Success: true,
 				Orders:  orders,
 			}
-			sendResponse(w, resp, http.StatusOK)
+			sendResponse(w, logger, resp, http.StatusOK)
 		})
 		if err != nil {
-			serverError(w, err)
+			serverError(w, cont, err)
 			return
 		}
 	})
-}
-
-func serverError(w http.ResponseWriter, err error) {
-	if err != nil {
-		resp := OrderResponse{
-			Success: false,
-			Error:   err.Error(),
-		}
-		sendResponse(w, resp, http.StatusInternalServerError)
-	}
 }

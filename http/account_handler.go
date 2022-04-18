@@ -7,6 +7,7 @@ import (
 	"strings"
 
 	"github.com/MihaiBlebea/trading-platform/account"
+	"github.com/sirupsen/logrus"
 	"go.uber.org/dig"
 )
 
@@ -33,34 +34,34 @@ func RegisterAccountHandler(cont *dig.Container) http.Handler {
 
 		err := json.NewDecoder(r.Body).Decode(&req)
 		if err != nil {
-			serverError(w, err)
+			serverError(w, cont, err)
 			return
 		}
 
 		if req.Username == "" {
-			serverError(w, errors.New("invalid username"))
+			serverError(w, cont, errors.New("invalid username"))
 			return
 		}
 
 		if req.Password == "" {
-			serverError(w, errors.New("invalid password"))
+			serverError(w, cont, errors.New("invalid password"))
 			return
 		}
 
 		if req.Email == "" {
-			serverError(w, errors.New("invalid email"))
+			serverError(w, cont, errors.New("invalid email"))
 			return
 		}
 
-		err = cont.Invoke(func(accRepo *account.AccountRepo) {
+		err = cont.Invoke(func(accRepo *account.AccountRepo, logger *logrus.Logger) {
 			account, err := account.NewAccount(req.Username, req.Email, req.Password)
 			if err != nil {
-				serverError(w, err)
+				serverError(w, cont, err)
 				return
 			}
 
 			if _, err := accRepo.Save(account); err != nil {
-				serverError(w, err)
+				serverError(w, cont, err)
 				return
 			}
 
@@ -68,11 +69,11 @@ func RegisterAccountHandler(cont *dig.Container) http.Handler {
 				Success: true,
 				Account: account,
 			}
-			sendResponse(w, resp, http.StatusOK)
+			sendResponse(w, logger, resp, http.StatusOK)
 		})
 
 		if err != nil {
-			serverError(w, err)
+			serverError(w, cont, err)
 			return
 		}
 	})
@@ -84,19 +85,19 @@ func LoginAccountHandler(cont *dig.Container) http.Handler {
 
 		err := json.NewDecoder(r.Body).Decode(&req)
 		if err != nil {
-			serverError(w, err)
+			serverError(w, cont, err)
 			return
 		}
 
-		err = cont.Invoke(func(accountRepo *account.AccountRepo) {
+		err = cont.Invoke(func(accountRepo *account.AccountRepo, logger *logrus.Logger) {
 			account, err := accountRepo.WithEmail(req.Email)
 			if err != nil {
-				serverError(w, errors.New("invalid credentials"))
+				serverError(w, cont, errors.New("invalid credentials"))
 				return
 			}
 
 			if !account.CheckPasswordHash(req.Password) {
-				serverError(w, errors.New("invalid credentials"))
+				serverError(w, cont, errors.New("invalid credentials"))
 				return
 			}
 
@@ -104,11 +105,11 @@ func LoginAccountHandler(cont *dig.Container) http.Handler {
 				Success: true,
 				Account: account,
 			}
-			sendResponse(w, resp, http.StatusOK)
+			sendResponse(w, logger, resp, http.StatusOK)
 		})
 
 		if err != nil {
-			serverError(w, err)
+			serverError(w, cont, err)
 			return
 		}
 	})
@@ -118,15 +119,15 @@ func AccountHandler(cont *dig.Container) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		header := r.Header.Get("Authorization")
 		if header == "" {
-			serverError(w, errors.New("could not find authorization header"))
+			serverError(w, cont, errors.New("could not find authorization header"))
 			return
 		}
 		apiToken := strings.Split(header, "Bearer ")[1]
 
-		err := cont.Invoke(func(accountRepo *account.AccountRepo) {
+		err := cont.Invoke(func(accountRepo *account.AccountRepo, logger *logrus.Logger) {
 			account, err := accountRepo.WithToken(apiToken)
 			if err != nil {
-				serverError(w, err)
+				serverError(w, cont, err)
 				return
 			}
 
@@ -134,10 +135,10 @@ func AccountHandler(cont *dig.Container) http.Handler {
 				Success: true,
 				Account: account,
 			}
-			sendResponse(w, resp, http.StatusOK)
+			sendResponse(w, logger, resp, http.StatusOK)
 		})
 		if err != nil {
-			serverError(w, err)
+			serverError(w, cont, err)
 			return
 		}
 	})

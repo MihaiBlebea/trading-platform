@@ -5,6 +5,7 @@ import (
 	"net/http"
 
 	"github.com/MihaiBlebea/trading-platform/symbols"
+	"github.com/sirupsen/logrus"
 	"go.uber.org/dig"
 )
 
@@ -31,14 +32,14 @@ func symbolHandler(cont *dig.Container) http.Handler {
 		query := r.URL.Query()
 		symbol := query.Get("symbol")
 		if symbol == "" {
-			serverError(w, errors.New("invalid symbol"))
+			serverError(w, cont, errors.New("invalid symbol"))
 			return
 		}
 
-		err := cont.Invoke(func(symbolService *symbols.Service) {
+		err := cont.Invoke(func(symbolService *symbols.Service, logger *logrus.Logger) {
 			s, err := symbolService.GetSymbol(symbol)
 			if err != nil {
-				serverError(w, err)
+				serverError(w, cont, err)
 				return
 			}
 
@@ -46,10 +47,10 @@ func symbolHandler(cont *dig.Container) http.Handler {
 				Success: true,
 				Symbol:  s,
 			}
-			sendResponse(w, resp, http.StatusOK)
+			sendResponse(w, logger, resp, http.StatusOK)
 		})
 		if err != nil {
-			serverError(w, err)
+			serverError(w, cont, err)
 			return
 		}
 	})
@@ -60,14 +61,14 @@ func symbolsHandler(cont *dig.Container) http.Handler {
 		query := r.URL.Query()
 		symbol := query.Get("search")
 		if symbol == "" {
-			serverError(w, errors.New("invalid symbol"))
+			serverError(w, cont, errors.New("invalid symbol"))
 			return
 		}
 
-		err := cont.Invoke(func(symbolRepo *symbols.SymbolRepo) {
+		err := cont.Invoke(func(symbolRepo *symbols.SymbolRepo, logger *logrus.Logger) {
 			symbols, err := symbolRepo.LikeSymbol(symbol)
 			if err != nil {
-				serverError(w, err)
+				serverError(w, cont, err)
 				return
 			}
 
@@ -75,10 +76,10 @@ func symbolsHandler(cont *dig.Container) http.Handler {
 				Success: true,
 				Symbols: symbols,
 			}
-			sendResponse(w, resp, http.StatusOK)
+			sendResponse(w, logger, resp, http.StatusOK)
 		})
 		if err != nil {
-			serverError(w, err)
+			serverError(w, cont, err)
 			return
 		}
 	})
@@ -89,14 +90,14 @@ func chartHandler(cont *dig.Container) http.Handler {
 		query := r.URL.Query()
 		symbol := query.Get("symbol")
 		if symbol == "" {
-			serverError(w, errors.New("invalid symbol"))
+			serverError(w, cont, errors.New("invalid symbol"))
 			return
 		}
 
-		err := cont.Invoke(func(symbolService *symbols.Service) {
+		err := cont.Invoke(func(symbolService *symbols.Service, logger *logrus.Logger) {
 			charts, err := symbolService.GetChart(symbol)
 			if err != nil {
-				serverError(w, err)
+				serverError(w, cont, err)
 				return
 			}
 
@@ -104,10 +105,10 @@ func chartHandler(cont *dig.Container) http.Handler {
 				Success: true,
 				Chart:   charts,
 			}
-			sendResponse(w, resp, http.StatusOK)
+			sendResponse(w, logger, resp, http.StatusOK)
 		})
 		if err != nil {
-			serverError(w, err)
+			serverError(w, cont, err)
 			return
 		}
 	})
