@@ -9,7 +9,6 @@ import (
 	"testing"
 
 	"github.com/MihaiBlebea/trading-platform/account"
-	"github.com/MihaiBlebea/trading-platform/di"
 	handler "github.com/MihaiBlebea/trading-platform/http"
 	"github.com/MihaiBlebea/trading-platform/pos"
 	"github.com/MihaiBlebea/trading-platform/symbols"
@@ -18,12 +17,11 @@ import (
 
 func init() {
 	os.Setenv("APP_ENV", "test")
-
-	cont = di.BuildContainer()
 }
 
 func TestGetPortfolio(t *testing.T) {
-	defer tearDown(t)
+	cont := setupSuite(t)
+	defer tearDown(t, cont)
 
 	// Create an account
 	acc, err := account.NewAccount("mihaib", "mihai@gmail.com", "1234")

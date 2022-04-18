@@ -20,15 +20,28 @@ import (
 	"gorm.io/gorm"
 )
 
-var cont *dig.Container
-
 func init() {
 	os.Setenv("APP_ENV", "test")
-
-	cont = di.BuildContainer()
 }
 
-func tearDown(t *testing.T) {
+func setupSuite(t *testing.T) *dig.Container {
+	cont := di.BuildContainer()
+	err := cont.Invoke(func(conn *gorm.DB) {
+		conn.AutoMigrate(
+			account.Account{},
+			pos.Position{},
+			order.Order{},
+			symbols.Symbol{},
+		)
+	})
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	return cont
+}
+
+func tearDown(t *testing.T, cont *dig.Container) {
 	err := cont.Invoke(func(conn *gorm.DB) {
 		conn.Migrator().DropTable(
 			account.Account{},
@@ -43,7 +56,8 @@ func tearDown(t *testing.T) {
 }
 
 func TestRegisterSuccess(t *testing.T) {
-	defer tearDown(t)
+	cont := setupSuite(t)
+	defer tearDown(t, cont)
 
 	r := mux.NewRouter()
 	r.Handle("/api/v1/register", handler.RegisterAccountHandler(cont)).Methods(http.MethodPost)
@@ -109,7 +123,8 @@ func TestRegisterSuccess(t *testing.T) {
 }
 
 func TestLoginSuccess(t *testing.T) {
-	defer tearDown(t)
+	cont := setupSuite(t)
+	defer tearDown(t, cont)
 
 	password := "1234"
 	acc, err := account.NewAccount("mihaib", "mihai@gmail.com", password)
@@ -118,7 +133,6 @@ func TestLoginSuccess(t *testing.T) {
 		return
 	}
 
-	cont := di.BuildContainer()
 	err = cont.Invoke(func(accountRepo *account.AccountRepo) {
 		accountRepo.Save(acc)
 	})
@@ -190,7 +204,8 @@ func TestLoginSuccess(t *testing.T) {
 }
 
 func TestFetchAccount(t *testing.T) {
-	defer tearDown(t)
+	cont := setupSuite(t)
+	defer tearDown(t, cont)
 
 	acc, err := account.NewAccount("mihaib", "mihai@gmail.com", "1234")
 	if err != nil {

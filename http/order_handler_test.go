@@ -10,7 +10,6 @@ import (
 	"testing"
 
 	"github.com/MihaiBlebea/trading-platform/account"
-	"github.com/MihaiBlebea/trading-platform/di"
 	handler "github.com/MihaiBlebea/trading-platform/http"
 	"github.com/MihaiBlebea/trading-platform/order"
 	"github.com/MihaiBlebea/trading-platform/pos"
@@ -20,12 +19,11 @@ import (
 
 func init() {
 	os.Setenv("APP_ENV", "test")
-
-	cont = di.BuildContainer()
 }
 
 func TestPlaceBuyOrder(t *testing.T) {
-	defer tearDown(t)
+	cont := setupSuite(t)
+	defer tearDown(t, cont)
 
 	// Create an account
 	acc, err := account.NewAccount("mihaib", "mihai@gmail.com", "1234")
@@ -136,7 +134,8 @@ func TestPlaceBuyOrder(t *testing.T) {
 }
 
 func TestPlaceSellOrder(t *testing.T) {
-	defer tearDown(t)
+	cont := setupSuite(t)
+	defer tearDown(t, cont)
 
 	// Create an account
 	acc, err := account.NewAccount("mihaib", "mihai@gmail.com", "1234")
@@ -250,7 +249,8 @@ func TestPlaceSellOrder(t *testing.T) {
 }
 
 func TestFetchOrders(t *testing.T) {
-	defer tearDown(t)
+	cont := setupSuite(t)
+	defer tearDown(t, cont)
 
 	// Create an account
 	acc, err := account.NewAccount("mihaib", "mihai@gmail.com", "1234")
@@ -321,7 +321,8 @@ func TestFetchOrders(t *testing.T) {
 }
 
 func TestCancelOrder(t *testing.T) {
-	defer tearDown(t)
+	cont := setupSuite(t)
+	defer tearDown(t, cont)
 
 	// Create an account
 	acc, err := account.NewAccount("mihaib", "mihai@gmail.com", "1234")
