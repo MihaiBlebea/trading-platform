@@ -2,7 +2,6 @@ package http
 
 import (
 	"errors"
-	"fmt"
 	"net/http"
 	"strings"
 
@@ -10,6 +9,7 @@ import (
 	"github.com/MihaiBlebea/trading-platform/di"
 	"github.com/MihaiBlebea/trading-platform/pos"
 	"github.com/MihaiBlebea/trading-platform/symbols"
+	"github.com/sirupsen/logrus"
 )
 
 type PositionsResponse struct {
@@ -27,7 +27,12 @@ func PositionsHandler() http.Handler {
 		}
 		apiToken := strings.Split(header, "Bearer ")[1]
 
-		err := di.BuildContainer().Invoke(func(accountRepo *account.AccountRepo, positionRepo *pos.PositionRepo, symbolService *symbols.Service) {
+		err := di.BuildContainer().Invoke(func(
+			accountRepo *account.AccountRepo,
+			positionRepo *pos.PositionRepo,
+			symbolService *symbols.Service,
+			logger *logrus.Logger) {
+
 			account, err := accountRepo.WithToken(apiToken)
 			if err != nil {
 				serverError(w, err)
@@ -47,7 +52,7 @@ func PositionsHandler() http.Handler {
 			for _, p := range positions {
 				s, err := symbolService.GetSymbol(p.Symbol)
 				if err != nil {
-					fmt.Println(err)
+					logger.Error(err)
 					continue
 				}
 				p.TotalValue = s.MarketPrice * float64(p.Quantity)
