@@ -3,6 +3,7 @@ package http
 import (
 	"context"
 	"encoding/json"
+	"fmt"
 	"net/http"
 
 	"github.com/go-redis/redis/v8"
@@ -19,8 +20,11 @@ type HealthResponse struct {
 
 func healthHandler(cont *dig.Container) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		response := HealthResponse{}
-		response.Server = true
+		response := HealthResponse{
+			Server:   true,
+			Database: true,
+			Redis:    true,
+		}
 
 		cont.Invoke(func(
 			conn *gorm.DB,
@@ -52,9 +56,9 @@ func sendResponse(
 	w.WriteHeader(code)
 
 	if code < 300 {
-		logger.Info(resp)
+		logger.Info(fmt.Sprintf("%+v", resp))
 	} else {
-		logger.Error(resp)
+		logger.Error(fmt.Sprintf("%+v", resp))
 	}
 
 	b, _ := json.Marshal(resp)
