@@ -22,7 +22,7 @@ func PositionsHandler(cont *dig.Container) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		header := r.Header.Get("Authorization")
 		if header == "" {
-			serverError(w, errors.New("could not find authorization header"))
+			serverError(w, cont, errors.New("could not find authorization header"))
 			return
 		}
 		apiToken := strings.Split(header, "Bearer ")[1]
@@ -35,13 +35,13 @@ func PositionsHandler(cont *dig.Container) http.Handler {
 
 			account, err := accountRepo.WithToken(apiToken)
 			if err != nil {
-				serverError(w, err)
+				serverError(w, cont, err)
 				return
 			}
 
 			positions, err := positionRepo.WithAccountId(account.ID)
 			if err != nil {
-				serverError(w, err)
+				serverError(w, cont, err)
 				return
 			}
 
@@ -62,10 +62,10 @@ func PositionsHandler(cont *dig.Container) http.Handler {
 				resp.Positions = append(resp.Positions, p)
 			}
 
-			sendResponse(w, resp, http.StatusOK)
+			sendResponse(w, logger, resp, http.StatusOK)
 		})
 		if err != nil {
-			serverError(w, err)
+			serverError(w, cont, err)
 		}
 	})
 }
