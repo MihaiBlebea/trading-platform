@@ -25,7 +25,8 @@ var startServerCmd = &cobra.Command{
 	RunE: func(cmd *cobra.Command, args []string) error {
 		fmt.Println("Server is starting")
 
-		err := di.BuildContainer().Invoke(func(orderFiller *activity.Filler, logger *logrus.Logger) {
+		cont := di.BuildContainer()
+		err := cont.Invoke(func(orderFiller *activity.Filler, logger *logrus.Logger) {
 			go func(orderFiller *activity.Filler) {
 				for {
 					if err := orderFiller.FillPendingOrders(); err != nil {
@@ -35,7 +36,7 @@ var startServerCmd = &cobra.Command{
 				}
 			}(orderFiller)
 
-			http.New(logger)
+			http.New(cont)
 		})
 		return err
 	},

@@ -10,7 +10,6 @@ import (
 	"testing"
 
 	"github.com/MihaiBlebea/trading-platform/account"
-	"github.com/MihaiBlebea/trading-platform/di"
 	handler "github.com/MihaiBlebea/trading-platform/http"
 	"github.com/MihaiBlebea/trading-platform/order"
 	"github.com/MihaiBlebea/trading-platform/pos"
@@ -23,7 +22,8 @@ func init() {
 }
 
 func TestPlaceBuyOrder(t *testing.T) {
-	defer tearDown(t)
+	cont := setupSuite(t)
+	defer tearDown(t, cont)
 
 	// Create an account
 	acc, err := account.NewAccount("mihaib", "mihai@gmail.com", "1234")
@@ -32,7 +32,10 @@ func TestPlaceBuyOrder(t *testing.T) {
 		return
 	}
 
-	err = di.BuildContainer().Invoke(func(accountRepo *account.AccountRepo, symbolRepo *symbols.SymbolRepo) {
+	err = cont.Invoke(func(
+		accountRepo *account.AccountRepo,
+		symbolRepo *symbols.SymbolRepo) {
+
 		_, err := accountRepo.Save(acc)
 		if err != nil {
 			t.Error(err)
@@ -51,7 +54,7 @@ func TestPlaceBuyOrder(t *testing.T) {
 	}
 
 	r := mux.NewRouter()
-	r.Handle("/api/v1/order", handler.PlaceOrderHandler()).Methods(http.MethodPost)
+	r.Handle("/api/v1/order", handler.PlaceOrderHandler(cont)).Methods(http.MethodPost)
 
 	ts := httptest.NewServer(r)
 	defer ts.Close()
@@ -131,7 +134,8 @@ func TestPlaceBuyOrder(t *testing.T) {
 }
 
 func TestPlaceSellOrder(t *testing.T) {
-	defer tearDown(t)
+	cont := setupSuite(t)
+	defer tearDown(t, cont)
 
 	// Create an account
 	acc, err := account.NewAccount("mihaib", "mihai@gmail.com", "1234")
@@ -140,7 +144,11 @@ func TestPlaceSellOrder(t *testing.T) {
 		return
 	}
 
-	err = di.BuildContainer().Invoke(func(accountRepo *account.AccountRepo, symbolRepo *symbols.SymbolRepo, positionRepo *pos.PositionRepo) {
+	err = cont.Invoke(func(
+		accountRepo *account.AccountRepo,
+		symbolRepo *symbols.SymbolRepo,
+		positionRepo *pos.PositionRepo) {
+
 		acc, err := accountRepo.Save(acc)
 		if err != nil {
 			t.Error(err)
@@ -165,7 +173,7 @@ func TestPlaceSellOrder(t *testing.T) {
 	}
 
 	r := mux.NewRouter()
-	r.Handle("/api/v1/order", handler.PlaceOrderHandler()).Methods(http.MethodPost)
+	r.Handle("/api/v1/order", handler.PlaceOrderHandler(cont)).Methods(http.MethodPost)
 
 	ts := httptest.NewServer(r)
 	defer ts.Close()
@@ -241,7 +249,8 @@ func TestPlaceSellOrder(t *testing.T) {
 }
 
 func TestFetchOrders(t *testing.T) {
-	defer tearDown(t)
+	cont := setupSuite(t)
+	defer tearDown(t, cont)
 
 	// Create an account
 	acc, err := account.NewAccount("mihaib", "mihai@gmail.com", "1234")
@@ -250,7 +259,7 @@ func TestFetchOrders(t *testing.T) {
 		return
 	}
 
-	err = di.BuildContainer().Invoke(func(accountRepo *account.AccountRepo, orderRepo *order.OrderRepo) {
+	err = cont.Invoke(func(accountRepo *account.AccountRepo, orderRepo *order.OrderRepo) {
 		acc, err := accountRepo.Save(acc)
 		if err != nil {
 			t.Error(err)
@@ -269,7 +278,7 @@ func TestFetchOrders(t *testing.T) {
 	}
 
 	r := mux.NewRouter()
-	r.Handle("/api/v1/orders", handler.OrdersHandler()).Methods(http.MethodGet)
+	r.Handle("/api/v1/orders", handler.OrdersHandler(cont)).Methods(http.MethodGet)
 
 	ts := httptest.NewServer(r)
 	defer ts.Close()
@@ -312,7 +321,8 @@ func TestFetchOrders(t *testing.T) {
 }
 
 func TestCancelOrder(t *testing.T) {
-	defer tearDown(t)
+	cont := setupSuite(t)
+	defer tearDown(t, cont)
 
 	// Create an account
 	acc, err := account.NewAccount("mihaib", "mihai@gmail.com", "1234")
@@ -321,7 +331,7 @@ func TestCancelOrder(t *testing.T) {
 		return
 	}
 
-	err = di.BuildContainer().Invoke(func(accountRepo *account.AccountRepo, orderRepo *order.OrderRepo) {
+	err = cont.Invoke(func(accountRepo *account.AccountRepo, orderRepo *order.OrderRepo) {
 		acc, err := accountRepo.Save(acc)
 		if err != nil {
 			t.Error(err)
@@ -340,7 +350,7 @@ func TestCancelOrder(t *testing.T) {
 	}
 
 	r := mux.NewRouter()
-	r.Handle("/api/v1/order/cancel", handler.CancelOrderHandler()).Methods(http.MethodPut)
+	r.Handle("/api/v1/order/cancel", handler.CancelOrderHandler(cont)).Methods(http.MethodPut)
 
 	ts := httptest.NewServer(r)
 	defer ts.Close()

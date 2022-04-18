@@ -18,8 +18,6 @@ import (
 	"gorm.io/gorm"
 )
 
-var conn *gorm.DB
-
 // https://blog.drewolson.org/dependency-injection-in-go
 func BuildContainer() *dig.Container {
 	container := dig.New()
@@ -77,9 +75,6 @@ func BuildContainer() *dig.Container {
 
 func buildForProd(container *dig.Container) {
 	container.Provide(func() (*gorm.DB, error) {
-		if conn != nil {
-			return conn, nil
-		}
 		dsn := fmt.Sprintf(
 			"host=%s user=%s password=%s dbname=%s port=%s sslmode=disable TimeZone=Europe/London",
 			os.Getenv("POSTGRES_HOST"),

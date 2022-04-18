@@ -16,6 +16,7 @@ import (
 	"github.com/MihaiBlebea/trading-platform/pos"
 	"github.com/MihaiBlebea/trading-platform/symbols"
 	"github.com/gorilla/mux"
+	"go.uber.org/dig"
 	"gorm.io/gorm"
 )
 
@@ -23,8 +24,25 @@ func init() {
 	os.Setenv("APP_ENV", "test")
 }
 
-func tearDown(t *testing.T) {
-	err := di.BuildContainer().Invoke(func(conn *gorm.DB) {
+func setupSuite(t *testing.T) *dig.Container {
+	cont := di.BuildContainer()
+	err := cont.Invoke(func(conn *gorm.DB) {
+		conn.AutoMigrate(
+			account.Account{},
+			pos.Position{},
+			order.Order{},
+			symbols.Symbol{},
+		)
+	})
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	return cont
+}
+
+func tearDown(t *testing.T, cont *dig.Container) {
+	err := cont.Invoke(func(conn *gorm.DB) {
 		conn.Migrator().DropTable(
 			account.Account{},
 			pos.Position{},
@@ -38,10 +56,11 @@ func tearDown(t *testing.T) {
 }
 
 func TestRegisterSuccess(t *testing.T) {
-	defer tearDown(t)
+	cont := setupSuite(t)
+	defer tearDown(t, cont)
 
 	r := mux.NewRouter()
-	r.Handle("/api/v1/register", handler.RegisterAccountHandler()).Methods(http.MethodPost)
+	r.Handle("/api/v1/register", handler.RegisterAccountHandler(cont)).Methods(http.MethodPost)
 
 	ts := httptest.NewServer(r)
 	defer ts.Close()
@@ -104,7 +123,8 @@ func TestRegisterSuccess(t *testing.T) {
 }
 
 func TestLoginSuccess(t *testing.T) {
-	defer tearDown(t)
+	cont := setupSuite(t)
+	defer tearDown(t, cont)
 
 	password := "1234"
 	acc, err := account.NewAccount("mihaib", "mihai@gmail.com", password)
@@ -113,7 +133,6 @@ func TestLoginSuccess(t *testing.T) {
 		return
 	}
 
-	cont := di.BuildContainer()
 	err = cont.Invoke(func(accountRepo *account.AccountRepo) {
 		accountRepo.Save(acc)
 	})
@@ -123,7 +142,7 @@ func TestLoginSuccess(t *testing.T) {
 	}
 
 	r := mux.NewRouter()
-	r.Handle("/api/v1/login", handler.LoginAccountHandler()).Methods(http.MethodPost)
+	r.Handle("/api/v1/login", handler.LoginAccountHandler(cont)).Methods(http.MethodPost)
 
 	ts := httptest.NewServer(r)
 	defer ts.Close()
@@ -185,7 +204,8 @@ func TestLoginSuccess(t *testing.T) {
 }
 
 func TestFetchAccount(t *testing.T) {
-	defer tearDown(t)
+	cont := setupSuite(t)
+	defer tearDown(t, cont)
 
 	acc, err := account.NewAccount("mihaib", "mihai@gmail.com", "1234")
 	if err != nil {
@@ -193,7 +213,6 @@ func TestFetchAccount(t *testing.T) {
 		return
 	}
 
-	cont := di.BuildContainer()
 	err = cont.Invoke(func(accountRepo *account.AccountRepo) {
 		accountRepo.Save(acc)
 	})
@@ -203,7 +222,7 @@ func TestFetchAccount(t *testing.T) {
 	}
 
 	r := mux.NewRouter()
-	r.Handle("/api/v1/account", handler.AccountHandler()).Methods(http.MethodGet)
+	r.Handle("/api/v1/account", handler.AccountHandler(cont)).Methods(http.MethodGet)
 
 	ts := httptest.NewServer(r)
 	defer ts.Close()

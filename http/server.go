@@ -2,7 +2,6 @@ package http
 
 import (
 	"fmt"
-	"log"
 
 	"net/http"
 	"os"
@@ -11,64 +10,67 @@ import (
 	"github.com/gorilla/mux"
 	"github.com/rs/cors"
 	"github.com/sirupsen/logrus"
+	"go.uber.org/dig"
 )
 
 const prefix = "/api/v1/"
 
-func New(logger *logrus.Logger) {
+func New(container *dig.Container) {
 
 	r := mux.NewRouter()
 
 	api := r.PathPrefix(prefix).Subrouter()
 
 	// Handle api calls
-	api.Handle("/health-check", healthHandler()).
+	api.Handle("/health-check", healthHandler(container)).
 		Methods(http.MethodGet)
 
 	// Account endpoints
-	api.Handle("/login", LoginAccountHandler()).
+	api.Handle("/login", LoginAccountHandler(container)).
 		Methods(http.MethodPost)
 
-	api.Handle("/register", RegisterAccountHandler()).
+	api.Handle("/register", RegisterAccountHandler(container)).
 		Methods(http.MethodPost)
 
-	api.Handle("/account", AccountHandler()).
+	api.Handle("/account", AccountHandler(container)).
 		Methods(http.MethodGet)
 
 	// Order endpoints
-	api.Handle("/order", PlaceOrderHandler()).
+	api.Handle("/order", PlaceOrderHandler(container)).
 		Methods(http.MethodPost)
 
-	api.Handle("/order/cancel", CancelOrderHandler()).
+	api.Handle("/order/cancel", CancelOrderHandler(container)).
 		Methods(http.MethodPut)
 
-	api.Handle("/orders", OrdersHandler()).
+	api.Handle("/orders", OrdersHandler(container)).
 		Methods(http.MethodGet)
 
 	// Position endpoints
-	api.Handle("/positions", PositionsHandler()).
+	api.Handle("/positions", PositionsHandler(container)).
 		Methods(http.MethodGet)
 
 	// Symbols endpoints
-	api.Handle("/symbol", symbolHandler()).
+	api.Handle("/symbol", symbolHandler(container)).
 		Methods(http.MethodGet)
 
-	api.Handle("/symbols", symbolsHandler()).
+	api.Handle("/symbols", symbolsHandler(container)).
 		Methods(http.MethodGet)
 
-	api.Handle("/chart", chartHandler()).
+	api.Handle("/chart", chartHandler(container)).
 		Methods(http.MethodGet)
 
-	r.Use(loggerMiddleware(logger))
+	container.Invoke(func(logger *logrus.Logger) {
+		r.Use(loggerMiddleware(logger))
 
-	srv := &http.Server{
-		Handler:      cors.AllowAll().Handler(r),
-		Addr:         fmt.Sprintf("0.0.0.0:%s", os.Getenv("HTTP_PORT")),
-		WriteTimeout: 15 * time.Second,
-		ReadTimeout:  15 * time.Second,
-	}
+		logger.Info(fmt.Sprintf("Started server on port %s", os.Getenv("HTTP_PORT")))
 
-	logger.Info(fmt.Sprintf("Started server on port %s", os.Getenv("HTTP_PORT")))
+		srv := &http.Server{
+			Handler:      cors.AllowAll().Handler(r),
+			Addr:         fmt.Sprintf("0.0.0.0:%s", os.Getenv("HTTP_PORT")),
+			WriteTimeout: 15 * time.Second,
+			ReadTimeout:  15 * time.Second,
+		}
 
-	log.Fatal(srv.ListenAndServe())
+		logger.Fatal(srv.ListenAndServe())
+	})
 }

@@ -9,7 +9,6 @@ import (
 	"testing"
 
 	"github.com/MihaiBlebea/trading-platform/account"
-	"github.com/MihaiBlebea/trading-platform/di"
 	handler "github.com/MihaiBlebea/trading-platform/http"
 	"github.com/MihaiBlebea/trading-platform/pos"
 	"github.com/MihaiBlebea/trading-platform/symbols"
@@ -21,7 +20,8 @@ func init() {
 }
 
 func TestGetPortfolio(t *testing.T) {
-	defer tearDown(t)
+	cont := setupSuite(t)
+	defer tearDown(t, cont)
 
 	// Create an account
 	acc, err := account.NewAccount("mihaib", "mihai@gmail.com", "1234")
@@ -32,7 +32,7 @@ func TestGetPortfolio(t *testing.T) {
 
 	var position *pos.Position
 
-	err = di.BuildContainer().Invoke(func(
+	err = cont.Invoke(func(
 		accountRepo *account.AccountRepo,
 		symbolRepo *symbols.SymbolRepo,
 		positionRepo *pos.PositionRepo) {
@@ -64,7 +64,7 @@ func TestGetPortfolio(t *testing.T) {
 	}
 
 	r := mux.NewRouter()
-	r.Handle("/api/v1/positions", handler.PositionsHandler()).Methods(http.MethodGet)
+	r.Handle("/api/v1/positions", handler.PositionsHandler(cont)).Methods(http.MethodGet)
 
 	ts := httptest.NewServer(r)
 	defer ts.Close()
