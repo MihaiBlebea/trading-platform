@@ -6,6 +6,7 @@ import (
 
 	"github.com/MihaiBlebea/trading-platform/di"
 	"github.com/spf13/cobra"
+	"gorm.io/gorm"
 )
 
 func init() {
@@ -23,15 +24,11 @@ var dropTableCmd = &cobra.Command{
 	RunE: func(cmd *cobra.Command, args []string) error {
 		tableName := args[0]
 
-		di := di.NewContainer()
-		conn, err := di.GetDatabaseConn()
-		if err != nil {
-			return err
-		}
+		err := di.BuildContainer().Invoke(func(conn *gorm.DB) {
+			fmt.Printf("Dropping table %s \n", tableName)
+			conn.Migrator().DropTable(tableName)
+		})
 
-		fmt.Printf("Dropping table %s \n", tableName)
-		conn.Migrator().DropTable(tableName)
-
-		return nil
+		return err
 	},
 }

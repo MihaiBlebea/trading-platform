@@ -6,6 +6,7 @@ import (
 	"net/http"
 
 	"github.com/MihaiBlebea/trading-platform/di"
+	"github.com/go-redis/redis/v8"
 	"gorm.io/gorm"
 )
 
@@ -20,15 +21,10 @@ func healthHandler() http.Handler {
 		response := HealthResponse{}
 		response.Server = true
 
-		di.BuildContainer().Invoke(func(conn *gorm.DB) {
+		di.BuildContainer().Invoke(func(conn *gorm.DB, redisClient *redis.Client) {
 			var tables []string
 			if err := conn.Table("information_schema.tables").Where("table_schema = ?", "public").Pluck("table_name", &tables).Error; err != nil {
 				response.Database = false
-			}
-
-			redisClient, err := di.NewContainer().GetRedisClient()
-			if err == nil {
-				response.Redis = true
 			}
 
 			if _, err := redisClient.Keys(context.Background(), "*").Result(); err != nil {
