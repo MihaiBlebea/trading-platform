@@ -5,8 +5,8 @@ import (
 	"encoding/json"
 	"net/http"
 
-	"github.com/MihaiBlebea/trading-platform/di"
 	"github.com/go-redis/redis/v8"
+	"go.uber.org/dig"
 	"gorm.io/gorm"
 )
 
@@ -16,12 +16,12 @@ type HealthResponse struct {
 	Redis    bool `json:"redis"`
 }
 
-func healthHandler() http.Handler {
+func healthHandler(cont *dig.Container) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		response := HealthResponse{}
 		response.Server = true
 
-		di.BuildContainer().Invoke(func(conn *gorm.DB, redisClient *redis.Client) {
+		cont.Invoke(func(conn *gorm.DB, redisClient *redis.Client) {
 			var tables []string
 			if err := conn.Table("information_schema.tables").Where("table_schema = ?", "public").Pluck("table_name", &tables).Error; err != nil {
 				response.Database = false

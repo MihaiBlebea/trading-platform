@@ -20,6 +20,8 @@ import (
 
 func init() {
 	os.Setenv("APP_ENV", "test")
+
+	cont = di.BuildContainer()
 }
 
 func TestPlaceBuyOrder(t *testing.T) {
@@ -32,7 +34,10 @@ func TestPlaceBuyOrder(t *testing.T) {
 		return
 	}
 
-	err = di.BuildContainer().Invoke(func(accountRepo *account.AccountRepo, symbolRepo *symbols.SymbolRepo) {
+	err = cont.Invoke(func(
+		accountRepo *account.AccountRepo,
+		symbolRepo *symbols.SymbolRepo) {
+
 		_, err := accountRepo.Save(acc)
 		if err != nil {
 			t.Error(err)
@@ -51,7 +56,7 @@ func TestPlaceBuyOrder(t *testing.T) {
 	}
 
 	r := mux.NewRouter()
-	r.Handle("/api/v1/order", handler.PlaceOrderHandler()).Methods(http.MethodPost)
+	r.Handle("/api/v1/order", handler.PlaceOrderHandler(cont)).Methods(http.MethodPost)
 
 	ts := httptest.NewServer(r)
 	defer ts.Close()
@@ -140,7 +145,11 @@ func TestPlaceSellOrder(t *testing.T) {
 		return
 	}
 
-	err = di.BuildContainer().Invoke(func(accountRepo *account.AccountRepo, symbolRepo *symbols.SymbolRepo, positionRepo *pos.PositionRepo) {
+	err = cont.Invoke(func(
+		accountRepo *account.AccountRepo,
+		symbolRepo *symbols.SymbolRepo,
+		positionRepo *pos.PositionRepo) {
+
 		acc, err := accountRepo.Save(acc)
 		if err != nil {
 			t.Error(err)
@@ -165,7 +174,7 @@ func TestPlaceSellOrder(t *testing.T) {
 	}
 
 	r := mux.NewRouter()
-	r.Handle("/api/v1/order", handler.PlaceOrderHandler()).Methods(http.MethodPost)
+	r.Handle("/api/v1/order", handler.PlaceOrderHandler(cont)).Methods(http.MethodPost)
 
 	ts := httptest.NewServer(r)
 	defer ts.Close()
@@ -250,7 +259,7 @@ func TestFetchOrders(t *testing.T) {
 		return
 	}
 
-	err = di.BuildContainer().Invoke(func(accountRepo *account.AccountRepo, orderRepo *order.OrderRepo) {
+	err = cont.Invoke(func(accountRepo *account.AccountRepo, orderRepo *order.OrderRepo) {
 		acc, err := accountRepo.Save(acc)
 		if err != nil {
 			t.Error(err)
@@ -269,7 +278,7 @@ func TestFetchOrders(t *testing.T) {
 	}
 
 	r := mux.NewRouter()
-	r.Handle("/api/v1/orders", handler.OrdersHandler()).Methods(http.MethodGet)
+	r.Handle("/api/v1/orders", handler.OrdersHandler(cont)).Methods(http.MethodGet)
 
 	ts := httptest.NewServer(r)
 	defer ts.Close()
@@ -321,7 +330,7 @@ func TestCancelOrder(t *testing.T) {
 		return
 	}
 
-	err = di.BuildContainer().Invoke(func(accountRepo *account.AccountRepo, orderRepo *order.OrderRepo) {
+	err = cont.Invoke(func(accountRepo *account.AccountRepo, orderRepo *order.OrderRepo) {
 		acc, err := accountRepo.Save(acc)
 		if err != nil {
 			t.Error(err)
@@ -340,7 +349,7 @@ func TestCancelOrder(t *testing.T) {
 	}
 
 	r := mux.NewRouter()
-	r.Handle("/api/v1/order/cancel", handler.CancelOrderHandler()).Methods(http.MethodPut)
+	r.Handle("/api/v1/order/cancel", handler.CancelOrderHandler(cont)).Methods(http.MethodPut)
 
 	ts := httptest.NewServer(r)
 	defer ts.Close()

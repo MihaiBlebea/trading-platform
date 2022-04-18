@@ -8,9 +8,9 @@ import (
 
 	"github.com/MihaiBlebea/trading-platform/account"
 	"github.com/MihaiBlebea/trading-platform/activity"
-	"github.com/MihaiBlebea/trading-platform/di"
 	"github.com/MihaiBlebea/trading-platform/order"
 	"github.com/MihaiBlebea/trading-platform/symbols"
+	"go.uber.org/dig"
 )
 
 type PlaceOrderRequest struct {
@@ -39,7 +39,7 @@ type OrdersResponse struct {
 	Orders  []order.Order `json:"orders"`
 }
 
-func PlaceOrderHandler() http.Handler {
+func PlaceOrderHandler(cont *dig.Container) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		var req PlaceOrderRequest
 
@@ -56,9 +56,10 @@ func PlaceOrderHandler() http.Handler {
 		}
 		apiToken := strings.Split(header, "Bearer ")[1]
 
-		cont := di.BuildContainer()
+		err = cont.Invoke(func(
+			symbolService *symbols.Service,
+			orderPlacer *activity.OrderPlacer) {
 
-		err = cont.Invoke(func(symbolService *symbols.Service, orderPlacer *activity.OrderPlacer) {
 			if !symbolService.Exists(strings.ToUpper(req.Symbol)) {
 				serverError(w, errors.New("symbol not found"))
 				return
@@ -85,7 +86,6 @@ func PlaceOrderHandler() http.Handler {
 			}
 			sendResponse(w, resp, http.StatusOK)
 		})
-
 		if err != nil {
 			serverError(w, err)
 			return
@@ -93,7 +93,7 @@ func PlaceOrderHandler() http.Handler {
 	})
 }
 
-func CancelOrderHandler() http.Handler {
+func CancelOrderHandler(cont *dig.Container) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		var req CancelOrderRequest
 
@@ -110,7 +110,7 @@ func CancelOrderHandler() http.Handler {
 		}
 		apiToken := strings.Split(header, "Bearer ")[1]
 
-		err = di.BuildContainer().Invoke(func(orderCanceller *activity.OrderCanceller) {
+		err = cont.Invoke(func(orderCanceller *activity.OrderCanceller) {
 			order, err := orderCanceller.CancelOrder(
 				apiToken,
 				req.OrderID,
@@ -133,7 +133,7 @@ func CancelOrderHandler() http.Handler {
 	})
 }
 
-func OrdersHandler() http.Handler {
+func OrdersHandler(cont *dig.Container) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		header := r.Header.Get("Authorization")
 		if header == "" {
@@ -142,7 +142,10 @@ func OrdersHandler() http.Handler {
 		}
 		apiToken := strings.Split(header, "Bearer ")[1]
 
-		err := di.BuildContainer().Invoke(func(accountRepo *account.AccountRepo, orderRepo *order.OrderRepo) {
+		err := cont.Invoke(func(
+			accountRepo *account.AccountRepo,
+			orderRepo *order.OrderRepo) {
+
 			account, err := accountRepo.WithToken(apiToken)
 			if err != nil {
 				serverError(w, err)

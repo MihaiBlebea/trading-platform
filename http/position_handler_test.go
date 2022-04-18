@@ -18,6 +18,8 @@ import (
 
 func init() {
 	os.Setenv("APP_ENV", "test")
+
+	cont = di.BuildContainer()
 }
 
 func TestGetPortfolio(t *testing.T) {
@@ -32,7 +34,7 @@ func TestGetPortfolio(t *testing.T) {
 
 	var position *pos.Position
 
-	err = di.BuildContainer().Invoke(func(
+	err = cont.Invoke(func(
 		accountRepo *account.AccountRepo,
 		symbolRepo *symbols.SymbolRepo,
 		positionRepo *pos.PositionRepo) {
@@ -64,7 +66,7 @@ func TestGetPortfolio(t *testing.T) {
 	}
 
 	r := mux.NewRouter()
-	r.Handle("/api/v1/positions", handler.PositionsHandler()).Methods(http.MethodGet)
+	r.Handle("/api/v1/positions", handler.PositionsHandler(cont)).Methods(http.MethodGet)
 
 	ts := httptest.NewServer(r)
 	defer ts.Close()

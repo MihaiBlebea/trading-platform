@@ -6,10 +6,10 @@ import (
 	"strings"
 
 	"github.com/MihaiBlebea/trading-platform/account"
-	"github.com/MihaiBlebea/trading-platform/di"
 	"github.com/MihaiBlebea/trading-platform/pos"
 	"github.com/MihaiBlebea/trading-platform/symbols"
 	"github.com/sirupsen/logrus"
+	"go.uber.org/dig"
 )
 
 type PositionsResponse struct {
@@ -18,7 +18,7 @@ type PositionsResponse struct {
 	Positions []pos.Position `json:"positions"`
 }
 
-func PositionsHandler() http.Handler {
+func PositionsHandler(cont *dig.Container) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		header := r.Header.Get("Authorization")
 		if header == "" {
@@ -27,7 +27,7 @@ func PositionsHandler() http.Handler {
 		}
 		apiToken := strings.Split(header, "Bearer ")[1]
 
-		err := di.BuildContainer().Invoke(func(
+		err := cont.Invoke(func(
 			accountRepo *account.AccountRepo,
 			positionRepo *pos.PositionRepo,
 			symbolService *symbols.Service,

@@ -7,7 +7,7 @@ import (
 	"strings"
 
 	"github.com/MihaiBlebea/trading-platform/account"
-	"github.com/MihaiBlebea/trading-platform/di"
+	"go.uber.org/dig"
 )
 
 type RegisterRequest struct {
@@ -27,7 +27,7 @@ type AccountResponse struct {
 	Account *account.Account `json:"account,omitempty"`
 }
 
-func RegisterAccountHandler() http.Handler {
+func RegisterAccountHandler(cont *dig.Container) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		var req RegisterRequest
 
@@ -51,8 +51,6 @@ func RegisterAccountHandler() http.Handler {
 			serverError(w, errors.New("invalid email"))
 			return
 		}
-
-		cont := di.BuildContainer()
 
 		err = cont.Invoke(func(accRepo *account.AccountRepo) {
 			account, err := account.NewAccount(req.Username, req.Email, req.Password)
@@ -80,7 +78,7 @@ func RegisterAccountHandler() http.Handler {
 	})
 }
 
-func LoginAccountHandler() http.Handler {
+func LoginAccountHandler(cont *dig.Container) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		var req LoginRequest
 
@@ -89,8 +87,6 @@ func LoginAccountHandler() http.Handler {
 			serverError(w, err)
 			return
 		}
-
-		cont := di.BuildContainer()
 
 		err = cont.Invoke(func(accountRepo *account.AccountRepo) {
 			account, err := accountRepo.WithEmail(req.Email)
@@ -118,7 +114,7 @@ func LoginAccountHandler() http.Handler {
 	})
 }
 
-func AccountHandler() http.Handler {
+func AccountHandler(cont *dig.Container) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		header := r.Header.Get("Authorization")
 		if header == "" {
@@ -126,8 +122,6 @@ func AccountHandler() http.Handler {
 			return
 		}
 		apiToken := strings.Split(header, "Bearer ")[1]
-
-		cont := di.BuildContainer()
 
 		err := cont.Invoke(func(accountRepo *account.AccountRepo) {
 			account, err := accountRepo.WithToken(apiToken)
@@ -142,7 +136,6 @@ func AccountHandler() http.Handler {
 			}
 			sendResponse(w, resp, http.StatusOK)
 		})
-
 		if err != nil {
 			serverError(w, err)
 			return

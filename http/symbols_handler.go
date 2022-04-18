@@ -4,8 +4,8 @@ import (
 	"errors"
 	"net/http"
 
-	"github.com/MihaiBlebea/trading-platform/di"
 	"github.com/MihaiBlebea/trading-platform/symbols"
+	"go.uber.org/dig"
 )
 
 type SymbolResponse struct {
@@ -26,7 +26,7 @@ type ChartResponse struct {
 	Chart   []symbols.Chart `json:"chart,omitempty"`
 }
 
-func symbolHandler() http.Handler {
+func symbolHandler(cont *dig.Container) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		query := r.URL.Query()
 		symbol := query.Get("symbol")
@@ -35,7 +35,7 @@ func symbolHandler() http.Handler {
 			return
 		}
 
-		err := di.BuildContainer().Invoke(func(symbolService *symbols.Service) {
+		err := cont.Invoke(func(symbolService *symbols.Service) {
 			s, err := symbolService.GetSymbol(symbol)
 			if err != nil {
 				serverError(w, err)
@@ -55,7 +55,7 @@ func symbolHandler() http.Handler {
 	})
 }
 
-func symbolsHandler() http.Handler {
+func symbolsHandler(cont *dig.Container) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		query := r.URL.Query()
 		symbol := query.Get("search")
@@ -64,7 +64,7 @@ func symbolsHandler() http.Handler {
 			return
 		}
 
-		err := di.BuildContainer().Invoke(func(symbolRepo *symbols.SymbolRepo) {
+		err := cont.Invoke(func(symbolRepo *symbols.SymbolRepo) {
 			symbols, err := symbolRepo.LikeSymbol(symbol)
 			if err != nil {
 				serverError(w, err)
@@ -84,7 +84,7 @@ func symbolsHandler() http.Handler {
 	})
 }
 
-func chartHandler() http.Handler {
+func chartHandler(cont *dig.Container) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		query := r.URL.Query()
 		symbol := query.Get("symbol")
@@ -93,7 +93,7 @@ func chartHandler() http.Handler {
 			return
 		}
 
-		err := di.BuildContainer().Invoke(func(symbolService *symbols.Service) {
+		err := cont.Invoke(func(symbolService *symbols.Service) {
 			charts, err := symbolService.GetChart(symbol)
 			if err != nil {
 				serverError(w, err)

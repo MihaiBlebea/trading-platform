@@ -16,15 +16,20 @@ import (
 	"github.com/MihaiBlebea/trading-platform/pos"
 	"github.com/MihaiBlebea/trading-platform/symbols"
 	"github.com/gorilla/mux"
+	"go.uber.org/dig"
 	"gorm.io/gorm"
 )
 
+var cont *dig.Container
+
 func init() {
 	os.Setenv("APP_ENV", "test")
+
+	cont = di.BuildContainer()
 }
 
 func tearDown(t *testing.T) {
-	err := di.BuildContainer().Invoke(func(conn *gorm.DB) {
+	err := cont.Invoke(func(conn *gorm.DB) {
 		conn.Migrator().DropTable(
 			account.Account{},
 			pos.Position{},
@@ -41,7 +46,7 @@ func TestRegisterSuccess(t *testing.T) {
 	defer tearDown(t)
 
 	r := mux.NewRouter()
-	r.Handle("/api/v1/register", handler.RegisterAccountHandler()).Methods(http.MethodPost)
+	r.Handle("/api/v1/register", handler.RegisterAccountHandler(cont)).Methods(http.MethodPost)
 
 	ts := httptest.NewServer(r)
 	defer ts.Close()
@@ -123,7 +128,7 @@ func TestLoginSuccess(t *testing.T) {
 	}
 
 	r := mux.NewRouter()
-	r.Handle("/api/v1/login", handler.LoginAccountHandler()).Methods(http.MethodPost)
+	r.Handle("/api/v1/login", handler.LoginAccountHandler(cont)).Methods(http.MethodPost)
 
 	ts := httptest.NewServer(r)
 	defer ts.Close()
@@ -193,7 +198,6 @@ func TestFetchAccount(t *testing.T) {
 		return
 	}
 
-	cont := di.BuildContainer()
 	err = cont.Invoke(func(accountRepo *account.AccountRepo) {
 		accountRepo.Save(acc)
 	})
@@ -203,7 +207,7 @@ func TestFetchAccount(t *testing.T) {
 	}
 
 	r := mux.NewRouter()
-	r.Handle("/api/v1/account", handler.AccountHandler()).Methods(http.MethodGet)
+	r.Handle("/api/v1/account", handler.AccountHandler(cont)).Methods(http.MethodGet)
 
 	ts := httptest.NewServer(r)
 	defer ts.Close()
