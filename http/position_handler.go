@@ -2,6 +2,7 @@ package http
 
 import (
 	"errors"
+	"fmt"
 	"net/http"
 	"strings"
 
@@ -45,8 +46,11 @@ func PositionsHandler() http.Handler {
 				return
 			}
 
+			fmt.Println(positions)
+
 			resp := PositionsResponse{
-				Success: true,
+				Success:   true,
+				Positions: []pos.Position{},
 			}
 
 			for _, p := range positions {
@@ -65,7 +69,6 @@ func PositionsHandler() http.Handler {
 		})
 		if err != nil {
 			serverError(w, err)
-			return
 		}
 	})
 }
