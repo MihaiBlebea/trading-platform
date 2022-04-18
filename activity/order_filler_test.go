@@ -89,7 +89,7 @@ func TestCanFillSellOrder(t *testing.T) {
 
 	symbol := "aapl"
 	quantity := 50
-	posRepo.Save(pos.NewPosition(account.ID, symbol, quantity))
+	posRepo.Save(pos.NewPosition(account.ID, symbol, quantity, 1077.44))
 
 	o, err := orderRepo.Save(order.NewSellOrder(
 		account.ID,

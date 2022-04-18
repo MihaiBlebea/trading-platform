@@ -161,7 +161,7 @@ func TestPlaceSellOrder(t *testing.T) {
 			return
 		}
 
-		_, err = positionRepo.Save(pos.NewPosition(acc.ID, "AAPL", 100))
+		_, err = positionRepo.Save(pos.NewPosition(acc.ID, "AAPL", 100, 144.44))
 		if err != nil {
 			t.Error(err)
 			return

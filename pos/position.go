@@ -15,22 +15,25 @@ type Position struct {
 	UpdatedAt          *time.Time `json:"-"`
 }
 
-func NewPosition(accountId int, symbol string, quantity int) *Position {
-	return &Position{
+func NewPosition(accountId int, symbol string, quantity int, fillPrice float64) *Position {
+	pos := &Position{
 		AccountID: accountId,
 		Symbol:    symbol,
 		Quantity:  quantity,
 	}
+	pos.IncrementQuantity(quantity, fillPrice)
+
+	return pos
 }
 
 func (p *Position) IsFound() bool {
 	return p.ID != 0
 }
 
-func (p *Position) IncrementQuantity(quantity int, price float64) {
+func (p *Position) IncrementQuantity(quantity int, fillPrice float64) {
 	p.Quantity += quantity
 	p.BoughtQuantity += quantity
-	p.BoughtTotalPrice += price * float64(quantity)
+	p.BoughtTotalPrice += fillPrice * float64(quantity)
 }
 
 func (p *Position) DecrementQuantity(quantity int) {
@@ -41,5 +44,9 @@ func (p *Position) DecrementQuantity(quantity int) {
 }
 
 func (p *Position) CalculateAverageBoughtPrice() {
+	if p.BoughtTotalPrice == 0 || p.BoughtQuantity == 0 {
+		p.AverageBoughtPrice = 0
+		return
+	}
 	p.AverageBoughtPrice = p.BoughtTotalPrice / float64(p.BoughtQuantity)
 }

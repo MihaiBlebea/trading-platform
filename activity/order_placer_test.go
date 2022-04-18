@@ -99,7 +99,7 @@ func TestCanPlaceSellOrder(t *testing.T) {
 	// Update position before placing sell order
 	symbol := "aapl"
 	quantity := 50
-	posRepo.Save(pos.NewPosition(account.ID, symbol, quantity))
+	posRepo.Save(pos.NewPosition(account.ID, symbol, quantity, 1077.44))
 
 	// Place sell order
 	o, err := orderPlacer.PlaceOrder(
@@ -170,7 +170,7 @@ func TestSellOrderInsufficientQuantity(t *testing.T) {
 	// Update position before placing sell order
 	symbol := "aapl"
 	quantity := 50
-	posRepo.Save(pos.NewPosition(account.ID, symbol, 10))
+	posRepo.Save(pos.NewPosition(account.ID, symbol, 10, 1077.44))
 
 	// Place sell order
 	_, err := orderPlacer.PlaceOrder(

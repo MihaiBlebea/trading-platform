@@ -49,8 +49,7 @@ func TestGetPortfolio(t *testing.T) {
 			return
 		}
 
-		position = pos.NewPosition(acc.ID, "AAPL", 100)
-		position.IncrementQuantity(10, float64(1077.44))
+		position = pos.NewPosition(acc.ID, "AAPL", 100, 1077.44)
 
 		_, err = positionRepo.Save(position)
 		if err != nil {
@@ -115,7 +114,7 @@ func TestGetPortfolio(t *testing.T) {
 		)
 	}
 
-	totalValue := float64(1210)
+	totalValue := float64(2200)
 	if response.Positions[0].TotalValue != totalValue {
 		t.Errorf(
 			"expected position total value to be %v, got: %v",

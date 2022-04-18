@@ -113,7 +113,7 @@ func (f *Filler) updatePosition(o *order.Order) error {
 	if o.Direction == order.DirectionBuy {
 		if position.ID == 0 {
 			// There is no position yet
-			position = pos.NewPosition(o.AccountID, o.Symbol, o.Quantity)
+			position = pos.NewPosition(o.AccountID, o.Symbol, o.Quantity, o.FillPrice)
 			_, err := f.positionRepo.Save(position)
 			if err != nil {
 				return err
