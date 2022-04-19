@@ -56,3 +56,23 @@ func (or *OrderRepoMock) WithAccountId(accountId int) ([]Order, error) {
 
 	return orders, nil
 }
+
+func (or *OrderRepoMock) WithDirectionStatusSymbolAndAccountId(
+	direction OrderDirection,
+	status OrderStatus,
+	accountId int,
+	symbol string) ([]Order, error) {
+
+	orders := []Order{}
+	for _, order := range or.orders {
+		if order.AccountID == accountId &&
+			order.Direction == direction &&
+			order.Status == status &&
+			order.Symbol == symbol {
+
+			orders = append(orders, order)
+		}
+	}
+
+	return orders, nil
+}

@@ -58,3 +58,23 @@ func (or *OrderRepo) WithId(id int) (*Order, error) {
 
 	return &order, err
 }
+
+func (or *OrderRepo) WithDirectionStatusSymbolAndAccountId(
+	direction OrderDirection,
+	status OrderStatus,
+	accountId int,
+	symbol string) ([]Order, error) {
+
+	orders := []Order{}
+	err := or.conn.Where(
+		"account_id = ? AND status = ? AND direction = ? AND symbol = ?",
+		accountId,
+		status,
+		direction,
+		symbol).Find(&orders).Error
+	if err != nil {
+		return []Order{}, err
+	}
+
+	return orders, err
+}

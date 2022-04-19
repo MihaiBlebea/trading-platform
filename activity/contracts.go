@@ -19,6 +19,11 @@ type OrderRepo interface {
 	WithPendingStatus() ([]order.Order, error)
 	WithAccountId(accountId int) ([]order.Order, error)
 	WithId(id int) (*order.Order, error)
+	WithDirectionStatusSymbolAndAccountId(
+		direction order.OrderDirection,
+		status order.OrderStatus,
+		accountId int,
+		symbol string) ([]order.Order, error)
 }
 
 type PositionRepo interface {

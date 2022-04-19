@@ -188,3 +188,40 @@ func TestSellOrderInsufficientQuantity(t *testing.T) {
 		t.Errorf("error message expected %s: got %s", errMessage, err)
 	}
 }
+
+func TestSellOrderAlreadyOrderInPending(t *testing.T) {
+	symbol := "AAPL"
+	accountRepo := account.AccountRepoMock{}
+	account := createAccount(t, &accountRepo)
+
+	orderRepo := order.OrderRepoMock{}
+	orderRepo.Save(order.NewSellOrder(account.ID, "sell", symbol, 10))
+
+	posRepo := pos.NewPositionRepoMock()
+
+	orderPlacer := activity.NewOrderPlacer(
+		&accountRepo,
+		&orderRepo,
+		posRepo,
+	)
+
+	// Update position before placing sell order
+	quantity := 50
+	posRepo.Save(pos.NewPosition(account.ID, symbol, quantity+10, 1077.44))
+
+	// Place sell order
+	_, err := orderPlacer.PlaceOrder(
+		account.ApiToken,
+		"limit",
+		"sell",
+		symbol,
+		0,
+		quantity,
+		0,
+		0,
+	)
+	errMessage := "selling pending order already exists"
+	if err.Error() != errMessage {
+		t.Errorf("error message expected %s: got %s", errMessage, err)
+	}
+}

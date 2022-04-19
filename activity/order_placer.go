@@ -122,6 +122,20 @@ func (op *OrderPlacer) PlaceSellOrder(
 		return &order.Order{}, errors.New("position quantity is too low")
 	}
 
+	// Check if there is already a pending order for this symbol
+	orders, err := op.orderRepo.WithDirectionStatusSymbolAndAccountId(
+		order.DirectionSell,
+		order.StatusPending,
+		account.ID,
+		symbol,
+	)
+	if err != nil {
+		return &order.Order{}, err
+	}
+	if len(orders) > 0 {
+		return &order.Order{}, errors.New("selling pending order already exists")
+	}
+
 	o := order.NewSellOrder(account.ID, orderType, symbol, quantity)
 	o, err = op.orderRepo.Save(o)
 	if err != nil {
