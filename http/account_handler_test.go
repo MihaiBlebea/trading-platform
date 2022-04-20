@@ -20,19 +20,29 @@ import (
 	"gorm.io/gorm"
 )
 
+var appleSymbol = symbols.NewSymbol(
+	"Apple",
+	"Apple Company",
+	"mobile phones",
+	"USD",
+	"AAPL",
+)
+
 func init() {
 	os.Setenv("APP_ENV", "test")
 }
 
 func setupSuite(t *testing.T) *dig.Container {
 	cont := di.BuildContainer()
-	err := cont.Invoke(func(conn *gorm.DB) {
+	err := cont.Invoke(func(conn *gorm.DB, symbolRepo *symbols.SymbolRepo) {
 		conn.AutoMigrate(
 			account.Account{},
 			pos.Position{},
 			order.Order{},
 			symbols.Symbol{},
 		)
+
+		symbolRepo.Save(appleSymbol)
 	})
 	if err != nil {
 		t.Fatal(err)

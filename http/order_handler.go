@@ -14,6 +14,11 @@ import (
 	"go.uber.org/dig"
 )
 
+type Order struct {
+	order.Order
+	Title string `json:"title"`
+}
+
 type PlaceOrderRequest struct {
 	Symbol     string  `json:"symbol"`
 	Amount     float64 `json:"amount"`
@@ -35,9 +40,9 @@ type OrderResponse struct {
 }
 
 type OrdersResponse struct {
-	Success bool          `json:"success"`
-	Error   string        `json:"error,omitempty"`
-	Orders  []order.Order `json:"orders"`
+	Success bool    `json:"success"`
+	Error   string  `json:"error,omitempty"`
+	Orders  []Order `json:"orders"`
 }
 
 func PlaceOrderHandler(cont *dig.Container) http.Handler {
@@ -147,6 +152,7 @@ func OrdersHandler(cont *dig.Container) http.Handler {
 		err := cont.Invoke(func(
 			accountRepo *account.AccountRepo,
 			orderRepo *order.OrderRepo,
+			symbolRepo *symbols.SymbolRepo,
 			logger *logrus.Logger) {
 
 			account, err := accountRepo.WithToken(apiToken)
@@ -163,8 +169,20 @@ func OrdersHandler(cont *dig.Container) http.Handler {
 
 			resp := OrdersResponse{
 				Success: true,
-				Orders:  orders,
+				Orders:  []Order{},
 			}
+
+			for _, o := range orders {
+				var title string
+				if s, err := symbolRepo.WithSymbol(o.Symbol); err == nil {
+					title = s.Title
+				} else {
+					logger.Error(err)
+				}
+
+				resp.Orders = append(resp.Orders, Order{o, title})
+			}
+
 			sendResponse(w, logger, resp, http.StatusOK)
 		})
 		if err != nil {

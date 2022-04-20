@@ -41,12 +41,6 @@ func TestPlaceBuyOrder(t *testing.T) {
 			t.Error(err)
 			return
 		}
-
-		_, err = symbolRepo.Save(symbols.NewSymbol("Apple", "Apple Inc.", "Computers", "USD", "AAPL"))
-		if err != nil {
-			t.Error(err)
-			return
-		}
 	})
 	if err != nil {
 		t.Error(err)
@@ -150,12 +144,6 @@ func TestPlaceSellOrder(t *testing.T) {
 		positionRepo *pos.PositionRepo) {
 
 		acc, err := accountRepo.Save(acc)
-		if err != nil {
-			t.Error(err)
-			return
-		}
-
-		_, err = symbolRepo.Save(symbols.NewSymbol("Apple", "Apple Inc.", "Computers", "USD", "AAPL"))
 		if err != nil {
 			t.Error(err)
 			return
@@ -317,6 +305,14 @@ func TestFetchOrders(t *testing.T) {
 
 	if response.Orders[0].Symbol != "AAPL" {
 		t.Errorf("expected order symbol to be APPL, got: %v", response.Orders[0].Symbol)
+	}
+
+	if response.Orders[0].Title != appleSymbol.Title {
+		t.Errorf(
+			"expected order tite to be %s, got: %s",
+			appleSymbol.Title,
+			response.Orders[0].Title,
+		)
 	}
 }
 

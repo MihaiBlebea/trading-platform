@@ -43,12 +43,6 @@ func TestGetPortfolio(t *testing.T) {
 			return
 		}
 
-		_, err = symbolRepo.Save(symbols.NewSymbol("Apple", "Apple Inc.", "Computers", "USD", "AAPL"))
-		if err != nil {
-			t.Error(err)
-			return
-		}
-
 		position = pos.NewPosition(acc.ID, "AAPL", 100, 1077.44)
 
 		_, err = positionRepo.Save(position)
