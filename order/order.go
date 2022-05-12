@@ -39,7 +39,7 @@ type Order struct {
 	FillPrice       float64        `json:"fill_price"`
 	AmountAfterFill float64        `json:"amount_after_fill"`
 	Symbol          string         `json:"symbol"`
-	Quantity        int            `json:"quantity"`
+	Quantity        float64        `json:"quantity"`
 	FilledAt        *time.Time     `json:"filled_at,omitempty"`
 	CancelledAt     *time.Time     `json:"cancelled_at,omitempty"`
 	CreatedAt       *time.Time     `json:"created_at"`
@@ -57,7 +57,7 @@ func NewBuyOrder(accountId int, orderType, symbol string, amount float64) *Order
 	}
 }
 
-func NewSellOrder(accountID int, orderType, symbol string, quantity int) *Order {
+func NewSellOrder(accountID int, orderType, symbol string, quantity float64) *Order {
 	return &Order{
 		AccountID: accountID,
 		Type:      OrderType(orderType),
@@ -98,9 +98,9 @@ func (o *Order) FillOrder(price float64) {
 	o.FilledAt = &now
 	o.Status = StatusFilled
 	if o.Direction == DirectionBuy {
-		o.Quantity = int(o.Amount / price)
+		o.Quantity = o.Amount / price
 	}
-	o.AmountAfterFill = o.FillPrice * float64(o.Quantity)
+	o.AmountAfterFill = o.FillPrice * o.Quantity
 	if o.Direction == DirectionBuy {
 		o.AmountAfterFill = -o.AmountAfterFill
 	}

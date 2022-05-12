@@ -98,7 +98,7 @@ func TestCanPlaceSellOrder(t *testing.T) {
 
 	// Update position before placing sell order
 	symbol := "aapl"
-	quantity := 50
+	var quantity float64 = 50
 	posRepo.Save(pos.NewPosition(account.ID, symbol, quantity, 1077.44))
 
 	// Place sell order
@@ -118,7 +118,7 @@ func TestCanPlaceSellOrder(t *testing.T) {
 	}
 
 	if o.Quantity != quantity {
-		t.Errorf("expected order quantity %d, got %v", quantity, o.Quantity)
+		t.Errorf("expected order quantity %v, got %v", quantity, o.Quantity)
 	}
 
 	if o.Symbol != strings.ToUpper(symbol) {
@@ -169,7 +169,7 @@ func TestSellOrderInsufficientQuantity(t *testing.T) {
 
 	// Update position before placing sell order
 	symbol := "aapl"
-	quantity := 50
+	var quantity float64 = 50
 	posRepo.Save(pos.NewPosition(account.ID, symbol, 10, 1077.44))
 
 	// Place sell order
@@ -206,7 +206,7 @@ func TestSellOrderAlreadyOrderInPending(t *testing.T) {
 	)
 
 	// Update position before placing sell order
-	quantity := 50
+	var quantity float64 = 50
 	posRepo.Save(pos.NewPosition(account.ID, symbol, quantity+10, 1077.44))
 
 	// Place sell order

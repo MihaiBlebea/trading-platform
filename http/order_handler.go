@@ -78,7 +78,7 @@ func PlaceOrderHandler(cont *dig.Container) http.Handler {
 				req.Direction,
 				req.Symbol,
 				req.Amount,
-				req.Quantity,
+				float64(req.Quantity),
 				req.StopLoss,
 				req.TakeProfit,
 			)
