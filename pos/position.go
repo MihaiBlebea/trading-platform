@@ -6,11 +6,11 @@ type Position struct {
 	ID                 int        `json:"id"`
 	AccountID          int        `json:"-"`
 	Symbol             string     `json:"symbol"`
-	Quantity           float64    `json:"quantity"`
-	BoughtTotalPrice   float64    `json:"bought_total_price"`
-	BoughtQuantity     float64    `json:"bought_quantity"`
-	TotalValue         float64    `json:"total_value" gorm:"-:all"`
-	AverageBoughtPrice float64    `json:"average_bought_price" gorm:"-:all"`
+	Quantity           float64    `json:"quantity"`                          // Up to date quantity of stocks in this position, updated when buying and selling stocks
+	BoughtTotalPrice   float64    `json:"bought_total_price"`                // Only updated when stocks are bought, this does not get updated when selling stocks
+	BoughtQuantity     float64    `json:"bought_quantity"`                   // Only the total quantity bought, this does not get updated when stocks are sold
+	TotalValue         float64    `json:"total_value" gorm:"-:all"`          // Total value of the stocks at current market price, only populated when returned to user
+	AverageBoughtPrice float64    `json:"average_bought_price" gorm:"-:all"` // Average price at which the stock has been bought, updated after each buy
 	CreatedAt          *time.Time `json:"created_at"`
 	UpdatedAt          *time.Time `json:"-"`
 }
@@ -48,5 +48,5 @@ func (p *Position) CalculateAverageBoughtPrice() {
 		p.AverageBoughtPrice = 0
 		return
 	}
-	p.AverageBoughtPrice = p.BoughtTotalPrice / float64(p.BoughtQuantity)
+	p.AverageBoughtPrice = p.BoughtTotalPrice / p.BoughtQuantity
 }

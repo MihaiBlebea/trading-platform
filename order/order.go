@@ -30,17 +30,17 @@ const (
 
 type Order struct {
 	ID              int            `json:"id"`
-	ParentOrderID   int            `json:"parent_order_id,omitempty"`
+	ParentOrderID   int            `json:"parent_order_id,omitempty"` // The id of the parent order if this is a stop loss or take profit order
 	AccountID       int            `json:"-"`
 	Type            OrderType      `json:"type"`
 	Status          OrderStatus    `json:"status"`
-	Direction       OrderDirection `json:"direction"`
-	Amount          float64        `json:"amount"`
-	FillPrice       float64        `json:"fill_price"`
-	AmountAfterFill float64        `json:"amount_after_fill"`
+	Direction       OrderDirection `json:"direction"`         // Can be buy or sell
+	Amount          float64        `json:"amount"`            // Total amount of money that user wants to invest in this stock
+	FillPrice       float64        `json:"fill_price"`        // Price per unit after the order has been filled
+	AmountAfterFill float64        `json:"amount_after_fill"` // Total amount of money after the order has been filled, based on the current price of the stock
 	Symbol          string         `json:"symbol"`
-	Quantity        float64        `json:"quantity"`
-	FilledAt        *time.Time     `json:"filled_at,omitempty"`
+	Quantity        float64        `json:"quantity"`            // Only supported for sell orders where user specifies the number of shares they wish to sell
+	FilledAt        *time.Time     `json:"filled_at,omitempty"` // Timedate when order has been filled
 	CancelledAt     *time.Time     `json:"cancelled_at,omitempty"`
 	CreatedAt       *time.Time     `json:"created_at"`
 	UpdatedAt       *time.Time     `json:"-"`
