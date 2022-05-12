@@ -30,22 +30,25 @@ func (op *OrderPlacer) PlaceOrder(
 	orderType,
 	direction,
 	symbol string,
-	amount float64,
-	quantity int,
-	stopLoss float64,
+	amount,
+	quantity,
+	stopLoss,
 	takeProfit float64) (*order.Order, error) {
 
+	// Get the user account
 	account, err := op.accountRepo.WithToken(apiToken)
 	if err != nil {
 		return &order.Order{}, err
 	}
 
+	// Check if this is a buy or sell order
 	if direction == string(order.DirectionBuy) {
 		o, err := op.PlaceBuyOrder(account, orderType, symbol, amount)
 		if err != nil {
 			return &order.Order{}, err
 		}
 
+		// Create extra stop loss order
 		if stopLoss != 0 {
 			_, err = op.orderRepo.Save(
 				order.NewStopLossOrder(account.ID, o.ID, symbol, stopLoss),
@@ -55,6 +58,7 @@ func (op *OrderPlacer) PlaceOrder(
 			}
 		}
 
+		// Create extra take profit order
 		if takeProfit != 0 {
 			_, err = op.orderRepo.Save(
 				order.NewTakeProfitOrder(account.ID, o.ID, symbol, takeProfit),
@@ -103,7 +107,7 @@ func (op *OrderPlacer) PlaceSellOrder(
 	account *account.Account,
 	orderType,
 	symbol string,
-	quantity int) (*order.Order, error) {
+	quantity float64) (*order.Order, error) {
 
 	if quantity == 0 {
 		return &order.Order{}, errors.New("need to specify a quantity greater than 0")

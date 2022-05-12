@@ -2,3 +2,4 @@ trading-platform
 vendor
 .env
 volume
+gorm.db

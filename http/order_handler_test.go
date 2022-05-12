@@ -227,7 +227,7 @@ func TestPlaceSellOrder(t *testing.T) {
 		)
 	}
 
-	if response.Order.Quantity != payload.Quantity {
+	if response.Order.Quantity != float64(payload.Quantity) {
 		t.Errorf(
 			"expected order quantity to be %d, got: %v",
 			payload.Quantity,
