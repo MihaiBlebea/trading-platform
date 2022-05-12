@@ -61,6 +61,15 @@ func (f *Filler) FillPendingOrders() error {
 		} else {
 			o.FillOrder(bid)
 		}
+		f.logger.Info(
+			fmt.Sprintf(
+				"order filled id: %d, amount after fill %v, fill price %v, quantity %v",
+				o.ID,
+				o.AmountAfterFill,
+				o.FillPrice,
+				o.Quantity,
+			),
+		)
 
 		if err := f.orderRepo.Update(&o); err != nil {
 			f.logger.Error(err)
@@ -82,8 +91,6 @@ func (f *Filler) FillPendingOrders() error {
 }
 
 func (f *Filler) updateAccount(o *order.Order) error {
-	f.logger.Info(fmt.Sprintf("order filled id: %d", o.ID))
-
 	account, err := f.accountRepo.WithId(o.AccountID)
 	if err != nil {
 		return err

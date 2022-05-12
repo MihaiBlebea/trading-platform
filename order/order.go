@@ -98,12 +98,9 @@ func (o *Order) FillOrder(price float64) {
 	o.FilledAt = &now
 	o.Status = StatusFilled
 	if o.Direction == DirectionBuy {
-		o.Quantity = o.Amount / price
+		o.Quantity = o.Amount / o.FillPrice
 	}
 	o.AmountAfterFill = o.FillPrice * o.Quantity
-	if o.Direction == DirectionBuy {
-		o.AmountAfterFill = -o.AmountAfterFill
-	}
 }
 
 func (o *Order) GetTotalFillAmount() float64 {

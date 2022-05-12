@@ -19,7 +19,6 @@ func NewPosition(accountId int, symbol string, quantity, fillPrice float64) *Pos
 	pos := &Position{
 		AccountID: accountId,
 		Symbol:    symbol,
-		Quantity:  quantity,
 	}
 	pos.IncrementQuantity(quantity, fillPrice)
 

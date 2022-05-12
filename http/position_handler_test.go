@@ -108,7 +108,7 @@ func TestGetPortfolio(t *testing.T) {
 		)
 	}
 
-	totalValue := float64(2200)
+	var totalValue float64 = 1100
 	if response.Positions[0].TotalValue != totalValue {
 		t.Errorf(
 			"expected position total value to be %v, got: %v",

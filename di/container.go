@@ -24,8 +24,10 @@ func BuildContainer() *dig.Container {
 
 	if os.Getenv("APP_ENV") == "prod" {
 		buildForProd(container)
-	} else {
+	} else if os.Getenv("APP_ENV") == "local" {
 		buildForLocal(container)
+	} else {
+		buildForTesting(container)
 	}
 
 	container.Provide(func() *logrus.Logger {
@@ -102,8 +104,28 @@ func buildForProd(container *dig.Container) {
 
 func buildForLocal(container *dig.Container) {
 	container.Provide(func() (*gorm.DB, error) {
+		file := "gorm.db"
+		conn, err := gorm.Open(sqlite.Open(file), &gorm.Config{})
+		if err != nil {
+			return &gorm.DB{}, err
+		}
+
+		return conn, nil
+	})
+
+	container.Provide(yahoofin.NewStubClient)
+
+	symbolServiceConst := func(client *yahoofin.ClientStub, repo *symbols.SymbolRepo) *symbols.Service {
+		return symbols.NewService(client, repo)
+	}
+
+	container.Provide(symbolServiceConst, dig.As(new(activity.SymbolService)))
+	container.Provide(symbolServiceConst)
+}
+
+func buildForTesting(container *dig.Container) {
+	container.Provide(func() (*gorm.DB, error) {
 		file := "file::memory:?cache=shared"
-		// file := "gorm.db"
 		conn, err := gorm.Open(sqlite.Open(file), &gorm.Config{})
 		if err != nil {
 			return &gorm.DB{}, err
