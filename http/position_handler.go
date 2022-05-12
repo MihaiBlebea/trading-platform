@@ -15,6 +15,9 @@ import (
 type PositionsResponse struct {
 	Success   bool           `json:"success"`
 	Error     string         `json:"error,omitempty"`
+	Equity    float64        `json:"equity"`
+	Cash      float64        `json:"cash"`
+	Total     float64        `json:"total"`
 	Positions []pos.Position `json:"positions"`
 }
 
@@ -47,6 +50,7 @@ func PositionsHandler(cont *dig.Container) http.Handler {
 
 			resp := PositionsResponse{
 				Success:   true,
+				Cash:      account.Balance,
 				Positions: []pos.Position{},
 			}
 
@@ -60,7 +64,10 @@ func PositionsHandler(cont *dig.Container) http.Handler {
 				p.CalculateAverageBoughtPrice()
 
 				resp.Positions = append(resp.Positions, p)
+				resp.Equity += p.TotalValue
 			}
+
+			resp.Total = resp.Cash + resp.Equity
 
 			sendResponse(w, logger, resp, http.StatusOK)
 		})

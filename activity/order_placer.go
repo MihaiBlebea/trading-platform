@@ -94,7 +94,7 @@ func (op *OrderPlacer) PlaceBuyOrder(
 		return &order.Order{}, err
 	}
 
-	account.PendingBalance = amount
+	account.PendingBalance += amount
 	err = op.accountRepo.Update(account)
 	if err != nil {
 		return &order.Order{}, err

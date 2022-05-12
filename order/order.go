@@ -111,6 +111,6 @@ func (o *Order) GetAmount() float64 {
 	return o.Amount
 }
 
-func (o *Order) GetDirectionString() string {
-	return string(o.Direction)
+func (o *Order) IsBuyOrder() bool {
+	return o.Direction == DirectionBuy
 }

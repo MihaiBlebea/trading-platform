@@ -10,7 +10,7 @@ import (
 type Order interface {
 	GetTotalFillAmount() float64
 	GetAmount() float64
-	GetDirectionString() string
+	IsBuyOrder() bool
 }
 
 type Account struct {
@@ -59,9 +59,11 @@ func hashPassword(password string) (string, error) {
 }
 
 func (a *Account) UpdateBalance(order Order) {
-	a.Balance += order.GetTotalFillAmount()
-	if order.GetDirectionString() == "buy" {
+	if order.IsBuyOrder() {
+		a.Balance -= order.GetTotalFillAmount()
 		a.PendingBalance -= order.GetAmount()
+	} else {
+		a.Balance += order.GetTotalFillAmount()
 	}
 }
 
