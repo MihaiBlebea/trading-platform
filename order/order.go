@@ -8,6 +8,7 @@ import (
 type OrderType string
 
 const (
+	TypePie        OrderType = "pie"
 	TypeLimit      OrderType = "limit"
 	TypeStopLoss   OrderType = "stop-loss"
 	TypeTakeProfit OrderType = "take-profit"

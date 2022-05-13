@@ -7,6 +7,7 @@ import (
 	"github.com/MihaiBlebea/trading-platform/account"
 	"github.com/MihaiBlebea/trading-platform/activity"
 	"github.com/MihaiBlebea/trading-platform/order"
+	"github.com/MihaiBlebea/trading-platform/pie"
 	"github.com/MihaiBlebea/trading-platform/pos"
 	"github.com/MihaiBlebea/trading-platform/symbols"
 	"github.com/MihaiBlebea/trading-platform/symbols/yahoofin"
@@ -60,6 +61,8 @@ func BuildContainer() *dig.Container {
 
 	container.Provide(pos.NewPositionRepo, dig.As(new(activity.PositionRepo)))
 	container.Provide(pos.NewPositionRepo)
+
+	container.Provide(pie.NewPieRepo)
 
 	container.Provide(symbols.NewSymbolRepo)
 

@@ -2,9 +2,10 @@ package cmd
 
 import (
 	"fmt"
+	"log"
 
 	"github.com/MihaiBlebea/trading-platform/di"
-	"github.com/MihaiBlebea/trading-platform/symbols"
+	"github.com/MihaiBlebea/trading-platform/pie"
 	"github.com/spf13/cobra"
 )
 
@@ -22,8 +23,25 @@ var testCmd = &cobra.Command{
 
 		container := di.BuildContainer()
 
-		err := container.Invoke(func(ss *symbols.Service) {
-			fmt.Println(ss.Exists("aapl"))
+		err := container.Invoke(func(pieRepo *pie.PieRepo) {
+			// pie, err := pie.NewPie(1, "my new fancy pie", []pie.PieSlice{
+			// 	{Size: 0.5, Symbol: "AAPL"},
+			// 	{Size: 0.5, Symbol: "TSLA"},
+			// })
+			// if err != nil {
+			// 	log.Fatal(err)
+			// 	return
+			// }
+
+			// pieRepo.Save(pie)
+
+			p, err := pieRepo.WithId(2)
+			if err != nil {
+				log.Fatal(err)
+				return
+			}
+
+			fmt.Printf("%+v", p)
 		})
 
 		if err != nil {
